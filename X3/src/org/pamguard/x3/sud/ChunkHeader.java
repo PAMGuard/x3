@@ -1,10 +1,66 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+
+import com.google.common.io.LittleEndianDataInputStream;
+
 /**
- * The chunk header for each block
- * @author au671271
+ * The chunk header for each block within the sud files. 
+ * <p>
+ * The chunk header provides a data integrity check and also contains
+ * information on what type of data are present in the block. 
+ * 
+ * @author Jamie Macaulay
  *
  */
-public class ChunkHeader extends SudFileHeader {
+public class ChunkHeader {
+	
+	
+	public int majicNo; //UInt16
+	public int ChunkId;  //UInt16
+	public int DataLength; //UInt16
+	public int SampleCount; //UInt16
+	public int TimeS; //UInt32
+	public int TimeOffsetUs; //UInt32
+	public int DataCrc; //UInt16
+	public int HeaderCrc; //UInt16
+	
+	
+
+	public static ChunkHeader deSerialise(LittleEndianDataInputStream dataInputStream) throws IOException {
+		
+		ChunkHeader header = new ChunkHeader(); 
+		
+		header.majicNo = dataInputStream.readUnsignedShort();
+		header.ChunkId = dataInputStream.readUnsignedShort();
+		header.DataLength = dataInputStream.readUnsignedShort();
+		header.SampleCount = dataInputStream.readUnsignedShort(); 
+		header.TimeS = dataInputStream.readInt();
+		header.TimeOffsetUs = dataInputStream.readInt();
+		header.DataCrc = dataInputStream.readUnsignedShort();
+		header.HeaderCrc = dataInputStream.readUnsignedShort();
+
+		return header;
+	}
+	
+	/**
+	 * Check that the chunk is valid - this simply checks a "magic" number
+	 * in the header that should be the correct number.  
+	 * @return true if the chunk header is valid. 
+	 */
+	public boolean checkId() {
+		return majicNo == 0xA952;
+	}
+	
+	
+	public String toHeaderString() {
+		return String.format("majicNo: %d\nChunkId: %d\nDataLength: %d\nSampleCount: %d\nTimeS: %d\nTimeOffsetUs: %d\nDataCrc: %d\n"
+				+ "HeaderCrc: %d\n", 
+				majicNo, ChunkId, DataLength, SampleCount, TimeS, TimeOffsetUs, DataCrc, 
+				HeaderCrc);
+		
+		
+	}
 
 }

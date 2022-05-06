@@ -1,8 +1,19 @@
 package org.pamguard.x3.sud;
 
-import java.io.BufferedInputStream;
 
+import com.google.common.io.LittleEndianDataInputStream;
+
+/**
+ * CSV data writer. 
+ * @author Jamie Macaulay
+ *
+ */
 public class CsvFileHandler implements ISudarDataHandler {
+	
+	/**
+	 * Chunk IDs. 
+	 */
+	private int[] chunkIds;  
 
 	public CsvFileHandler(String filePath) {
 		// TODO Auto-generated constructor stub
@@ -21,9 +32,14 @@ public class CsvFileHandler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(BufferedInputStream inputStream, String innerXml, int id) {
-		// TODO Auto-generated method stub
+	public void init(LittleEndianDataInputStream inputStream, String innerXml, int id) {
+		this.chunkIds = new int[]{id};
 
+	}
+
+	@Override
+	public int[] getChunkID() {
+		return chunkIds;
 	}
 
 }

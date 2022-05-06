@@ -1,8 +1,11 @@
 package org.pamguard.x3.sud;
 
-import java.io.BufferedInputStream;
+
+import com.google.common.io.LittleEndianDataInputStream;
 
 public class TxtFileHandler implements ISudarDataHandler {
+
+	private int[] chunkIds;
 
 	public TxtFileHandler(String filePath) {
 		// TODO Auto-generated constructor stub
@@ -20,10 +23,16 @@ public class TxtFileHandler implements ISudarDataHandler {
 
 	}
 
-	@Override
-	public void init(BufferedInputStream inputStream, String innerXml, int id) {
-		// TODO Auto-generated method stub
 
+	@Override
+	public void init(LittleEndianDataInputStream inputStream, String innerXml, int id) {
+		this.chunkIds = new int[]{id};
+
+	}
+
+	@Override
+	public int[] getChunkID() {
+		return chunkIds;
 	}
 
 }
