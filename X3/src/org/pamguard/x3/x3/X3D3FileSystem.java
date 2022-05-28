@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
+import org.pamguard.x3.utils.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -68,18 +65,18 @@ public class X3D3FileSystem extends X3FileSystem {
 		childrenNeeded.put("FS", null);
 		childrenNeeded.put("NCHS", null);
 		
-		ArrayList<Node> possibleNodesToGetAllFields = getNodesWithChildren(getNodeArrayList(getNodeArray(mainNode.getChildNodes())), childrenNeeded);
+		ArrayList<Node> possibleNodesToGetAllFields = XMLUtils.getNodesWithChildren(XMLUtils.getNodeArrayList(XMLUtils.getNodeArray(mainNode.getChildNodes())), childrenNeeded);
 		
 		if (possibleNodesToGetAllFields.size()==1){
-			ArrayList<Node> correctCfgNodeChildren = getNodeArrayList(getNodeArray(possibleNodesToGetAllFields.get(0).getChildNodes()));
+			ArrayList<Node> correctCfgNodeChildren = XMLUtils.getNodeArrayList(XMLUtils.getNodeArray(possibleNodesToGetAllFields.get(0).getChildNodes()));
 //			ArrayList<Node> nodes = getNodesOfName(correctCfgNodeChildren, "BLKLEN");
 //			Node blkNode = nodes.get(0);
 //			String val = blkNode.getTextContent();//getNodeValue();
 //			Integer iVal = Integer.valueOf(val);
 			
-			fileHeader.blockLen = Integer.valueOf(getNodesOfName(correctCfgNodeChildren, "BLKLEN").get(0).getTextContent());
-			fileHeader.sampleRate = Integer.valueOf(getNodesOfName(correctCfgNodeChildren, "FS").get(0).getTextContent());
-			fileHeader.nChannels = Integer.valueOf(getNodesOfName(correctCfgNodeChildren, "NCHS").get(0).getTextContent());
+			fileHeader.blockLen = Integer.valueOf(XMLUtils.getNodesOfName(correctCfgNodeChildren, "BLKLEN").get(0).getTextContent());
+			fileHeader.sampleRate = Integer.valueOf(XMLUtils.getNodesOfName(correctCfgNodeChildren, "FS").get(0).getTextContent());
+			fileHeader.nChannels = Integer.valueOf(XMLUtils.getNodesOfName(correctCfgNodeChildren, "NCHS").get(0).getTextContent());
 		}
 		return fileHeader;
 	}

@@ -3,6 +3,12 @@ package org.pamguard.x3.sud;
 
 import com.google.common.io.LittleEndianDataInputStream;
 
+/**
+ * Parse wav files. 
+ * 
+ * @author Jamie Macaulay
+ *
+ */
 public class WavFileHandler implements ISudarDataHandler {
 
 	private int[] chunkIds;
@@ -13,8 +19,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	@Override
 	public void processChunk(ChunkHeader ch, byte[] buf) {
-		// TODO Auto-generated method stub
-
+		System.out.println("Process wav chunk");
 	}
 
 	@Override

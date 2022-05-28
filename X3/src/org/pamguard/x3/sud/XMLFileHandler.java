@@ -3,26 +3,45 @@ package org.pamguard.x3.sud;
 import java.io.File;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import com.google.common.io.LittleEndianDataInputStream;
 
 
-
+/**
+ * 	Handles XML chunks in the .sud file. The XML chunks define the ID of the other chunks i.e. what the chunk IDs mean and 
+ *  how to parse them. The XML
+ * @author Jamie Macaulay
+ *
+ */
 public class XMLFileHandler implements ISudarDataHandler  {
 	
 	private int[] chunkIds;
 	
+	/**
+	 * The file name. 
+	 */
+	private File fileName;
 
-	public XMLFileHandler(File outFolder, String outName, ArrayList<ISudarDataHandler> dataHandlers) {
-		// TODO Auto-generated constructor stub
+	/**
+	 * The buffer input stream.
+	 */
+	private LittleEndianDataInputStream bufInput;
+
+	private HashMap<Integer, IDSudar>  dataHandlers;
+	
+
+	public XMLFileHandler(File sourceFile, File outFolder, String outName, HashMap<Integer, IDSudar> dataHandlers) {
+		this.fileName = sourceFile;
+		this.dataHandlers = dataHandlers;
 	}
 
 	@Override
@@ -30,19 +49,59 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		swapEndian(buf); 
 
 		String xml = new String(buf, "UTF-8");
-
-		Document doc = convertStringToXMLDocument(xml);
-
-		System.out.println(doc.getChildNodes().toString());
 		
+		System.out.println(xml);
+
+		//very important t o use trim or else throws an error
+		Document doc = convertStringToXMLDocument(xml.trim());
+
+//		System.out.println(doc.getDocumentElement().toString());
+//		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getNodeName());
+//		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getAttributes().item(0));
+
+
 		NodeList nodeList = doc.getElementsByTagName("CFG"); 
+		
+		System.out.println("node len XML: " + nodeList.getLength()); 
+
 		
 		if(nodeList!=null && nodeList.getLength() > 0) {
 			for (int i=0; i<nodeList.getLength(); i++) {
 				
-				System.out.println(nodeList.item(i).getAttributes()); 
+				System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
+
 				
+
+//				System.out.println("CODEC: " + nodeList.item(i).getAttributes().getNamedItem("CODEC").getNodeValue()); 
+//				System.out.println("SUFFIX: " + nodeList.item(i).getAttributes().getNamedItem("SUFFIX").getNodeValue()); 
 				
+				Node ftype = nodeList.item(i).getAttributes().getNamedItem("FTYPE");
+				Node id = nodeList.item(i).getAttributes().getNamedItem("ID");
+				Node srcid = nodeList.item(i).getAttributes().getNamedItem("CODEC");
+				Node suffix = nodeList.item(i).getAttributes().getNamedItem("SUFFIX");
+				
+				if(ftype != null && id != null && Integer.valueOf(id.getNodeValue()) != 0) {
+					try {
+						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), fileName.getAbsolutePath());
+						handler.init(bufInput, xml, i);
+						
+						IDSudar idSudar = new IDSudar(); 
+						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
+						idSudar.dataHandler = handler; 
+						if (srcid!=null) {
+							idSudar.srdID = Integer.valueOf(srcid.getNodeValue().trim()); 
+						}
+						System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srdID); 
+						
+						dataHandlers.put(idSudar.iD , idSudar);
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+					
+				}
+
 //				XmlAttribute ftype = n.Attributes["FTYPE"];
 //				XmlAttribute id = n.Attributes["ID"];
 //				XmlAttribute srcid = n.Attributes["CODEC"];
@@ -53,6 +112,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //					d.ftype = ftype.Value;
 //					if(srcid != null)
 //						d.srcId = Convert.ToInt32(srcid.Value);
+				
 //					d.handler = SudarDataHandlerHelper.CreateHandler(d.ftype, fileName);
 //					d.handler.Init(log, n.OuterXml, d.id);
 //					configs.Add(d.id, d);
@@ -86,7 +146,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	 * @param xmlString - the xml string to parse
 	 * @return 
 	 */
-	private static Document convertStringToXMLDocument(String xmlString) {
+	public static Document convertStringToXMLDocument(String xmlString) {
 		//Parser that produces DOM object trees from XML content
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
@@ -112,8 +172,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 	@Override
 	public void init(LittleEndianDataInputStream bufinput, String innerXml, int id) {
+		this.bufInput = bufinput;
 		this.chunkIds = new int[]{id};
-
 	}
 
 	@Override

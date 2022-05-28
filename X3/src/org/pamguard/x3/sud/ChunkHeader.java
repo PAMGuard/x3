@@ -1,6 +1,5 @@
 package org.pamguard.x3.sud;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 
 import com.google.common.io.LittleEndianDataInputStream;

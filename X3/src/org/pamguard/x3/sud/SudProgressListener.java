@@ -1,5 +1,12 @@
 package org.pamguard.x3.sud;
 
+
+/**
+ * The progress listener for file decompression. 
+ * 
+ * @author Jamie Macaulay
+ *
+ */
 public interface SudProgressListener  {
 	
 	/**

@@ -1,19 +1,11 @@
 package org.pamguard.x3.x3;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -24,8 +16,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 //import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -223,92 +213,5 @@ public abstract class X3FileSystem {
 		return asString;
 	}
 	
-	/**
-	 * @param nodeList
-	 * @return nodeList as Node[]
-	 */
-	public Node[] getNodeArray(NodeList nodeList){
-		Node[] nodes = new Node[nodeList.getLength()];
-		for (int i=0;i<nodeList.getLength();i++){
-			nodes[i]=nodeList.item(i);
-		}
-		return nodes;
-	}
-	
-	/**
-	 * @param nodeArray
-	 * @return nodeArray as ArrayList<Node>
-	 */
-	public ArrayList<Node> getNodeArrayList(Node[] nodeArray){
-		return new ArrayList<Node>(Arrays.asList(nodeArray));
-	}
-	
-	/**
-	 * @param nodes - ArrayList of nodes to look through for one with specific name
-	 * @param name - name to match
-	 * @return a copy of "nodes" without ones that are not named name 
-	 */
-	public ArrayList<Node> getNodesOfName(ArrayList<Node> nodes,String name){
-		ArrayList<Node> nodesLeft = new ArrayList<Node>();
-		for (int i=0;i<nodes.size();i++){
-			if (nodes.get(i).getNodeName()==name){
-				nodesLeft.add(nodes.get(i));
-			}
-		}
-		return nodesLeft;
-	}
-	
-	/**
-	 * @param nodes - ArrayList of nodes to look through for attributes
-	 * @param attributes - a HashMap of <attribute, attributeValues> attributeVAlue can be null if it is not required to be equal to anything
-	 * @return a copy of "nodes" without ones that don't match 
-	 */
-	public ArrayList<Node> getNodesWithAttributes(ArrayList<Node> nodes,HashMap<String,String> attributes){
-		ArrayList<Node> nodesLeft = new ArrayList<Node>();
-		for (int i=0;i<nodes.size();i++){
-			
-			int attMat=0;
-			for (String key : attributes.keySet()){
-				Node match = nodes.get(i).getAttributes().getNamedItem(key); // works simply as cant has 2 attributes of same name?
-				if( match != null){
-					if (attributes.get(key) == null || attributes.get(key) == match.getNodeValue()){ //should maybe be getTextContent()
-						attMat++;
-					}
-				}
-			}
-			
-			if (attMat==attributes.size()){
-				nodesLeft.add(nodes.get(i));
-			}
-		}
-		return nodesLeft;
-	}
-	
-	/**
-	 * @param nodes - ArrayList of nodes to look through for child nodes
-	 * @param children - a HashMap of <childNames, childValues> childVAlue can be null if it is not required to be equal to anything
-	 * @return a copy of "nodes" without ones that don't match 
-	 */
-	public ArrayList<Node> getNodesWithChildren(ArrayList<Node> nodes, HashMap<String,String> children){
-		ArrayList<Node> nodesLeft = new ArrayList<Node>();
-		for (int i=0;i<nodes.size();i++){
-			int cldMat=0;
-			for (String key : children.keySet()){
-				ArrayList<Node> nameMatches = getNodesOfName(getNodeArrayList(getNodeArray(nodes.get(i).getChildNodes())), key);
-				for (Node match:nameMatches){
-					if( children.get(key) == null || children.get(key) == match.getTextContent() ){
-						//value isn't required or matches
-						cldMat++;
-					}
-//					if (attributes.get(key) == null || attributes.get(key) == match.getNodeValue()){
-//						attMat++;
-//					}
-				}
-			}
-			if (cldMat==children.size()){
-				nodesLeft.add(nodes.get(i));
-			}
-		}
-		return nodesLeft;
-	}
+
 }

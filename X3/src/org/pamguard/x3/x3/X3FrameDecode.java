@@ -10,7 +10,12 @@ package org.pamguard.x3.x3;
  */
 public class X3FrameDecode {
 
+	
 	static short[] irt = RiceTable.makeInverseRice(20);
+	
+//	static short[] irt = {0,-1,1,-2,2,-3,3,-4,4,-5,5,-6,6,-7,7,-8,8,-9,9,-10,10,
+//			-11,11,-12,12,-13,13,-14,14,-15,15,-16,16,-17,17,-18,18,
+//			-19,19,-20,20,-21,21,-22,22,-23,23,-24,24,-25,25,-26,26};
 
 	public X3FrameDecode() {
 	}
@@ -33,6 +38,8 @@ public class X3FrameDecode {
 		if (data == null || data.length != nChan*nFrames) {
 			data = new short[nChan*nFrames];
 		}
+		//System.out.println("Data size: " + data.length);
+		
 		int j = offset;
 		for (int i = 0; i < nChan; i++, j+=2) {
 			data[i] = (short) ((x3Data[j]&0xFF)<<8 | (x3Data[j+1]&0xFF));
@@ -45,7 +52,7 @@ public class X3FrameDecode {
 			int nBlock = Math.min(nFrames, blockLen);
 			for (int iChan = 0; iChan < nChan; iChan++) {
 				int codeType = bits.getBits(2);
-				//				System.out.println(String.format("rem frames %d chan %d code %d", nFrames, iChan, codeType));
+				System.out.println(String.format("rem frames %d chan %d code %d", nFrames, iChan, codeType));
 				iBit +=2;
 				switch (codeType) {
 				case 1:
