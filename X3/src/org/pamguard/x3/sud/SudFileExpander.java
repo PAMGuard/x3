@@ -1,5 +1,8 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,15 +56,19 @@ public class SudFileExpander {
 
 
 		//create input stream to read the binary data.
-		LittleEndianDataInputStream bufinput = new LittleEndianDataInputStream(new FileInputStream(file)); 
+		DataInput bufinput;
+				bufinput = new SudDataInputStream(new FileInputStream(file));
+//		bufinput = new DataInputStream(new FileInputStream(file));
 
 
-		int nbytes = bufinput.available();
+
+		//		bufinput.
+		//		int nbytes = bufinput.available();
 
 
 		SudHeader sudHeader = SudHeader.deSerialise(bufinput);
 		System.out.println(sudHeader.toHeaderString());
-		System.out.println("Bytes read: " + (nbytes-bufinput.available()));
+		//		System.out.println("Bytes read: " + (nbytes-bufinput.available()));
 
 		dataHandlers.clear();
 
@@ -79,29 +86,34 @@ public class SudFileExpander {
 
 		ChunkHeader chunkHeader;
 		int count = 0; 
-		while(bufinput.available()>0){
+		while(true){
+			try {
+				chunkHeader = ChunkHeader.deSerialise(bufinput);
 
-			chunkHeader = ChunkHeader.deSerialise(bufinput);
+				if (chunkHeader.checkId()) {
 
-			if (chunkHeader.checkId()) {
+					//				System.out.println("--------------");
+					//				System.out.println(chunkHeader.toHeaderString());
 
-				//				System.out.println("--------------");
-				//				System.out.println(chunkHeader.toHeaderString());
+					System.out.println("Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
 
-				System.out.println("Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					byte[] data = new byte[chunkHeader.DataLength];
+					bufinput.readFully(data);
+//					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
 
-
-				byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
-
-				//process the chunk
-				processChunk(chunkHeader.ChunkId, chunkHeader, data);
+					//process the chunk
+					processChunk(chunkHeader.ChunkId, chunkHeader, data);
 
 
+				}
+
+				//TEMP
+				count++;
+				if (count>25) return;
 			}
-			
-			//TEMP
-			count++;
-			if (count>25) return;
+			catch (EOFException eof) {
+				break;
+			}
 		}
 
 	}
@@ -115,24 +127,24 @@ public class SudFileExpander {
 	 */
 	void processChunk(int chunkId, ChunkHeader ch, byte[] buf) {
 		//if (chunkId!=0) {
-			//does the data handler contain the chunkID?
-			//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
-		
-			IDSudar aHandler = dataHandlers.get(chunkId); 
-			
-			if (aHandler==null) return; 
-			
-			if (aHandler.srdID > 0 ) {
-				//if the srcID > 0 there may be another data handler that needs to be used first. This will 
-				//recursively process data through all data handlers up until the srcID is zero. 
-				processChunk(aHandler.srdID,  ch, buf); //recursive
-			}
-			try {
-				aHandler.dataHandler.processChunk(ch, buf);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		//does the data handler contain the chunkID?
+		//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
+
+		IDSudar aHandler = dataHandlers.get(chunkId); 
+
+		if (aHandler==null) return; 
+
+		if (aHandler.srdID > 0 ) {
+			//if the srcID > 0 there may be another data handler that needs to be used first. This will 
+			//recursively process data through all data handlers up until the srcID is zero. 
+			processChunk(aHandler.srdID,  ch, buf); //recursive
+		}
+		try {
+			aHandler.dataHandler.processChunk(ch, buf);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 

@@ -1,5 +1,6 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
 import java.io.File;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +35,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	/**
 	 * The buffer input stream.
 	 */
-	private LittleEndianDataInputStream bufInput;
+	private DataInput bufInput;
 
 	private HashMap<Integer, IDSudar>  dataHandlers;
 	
@@ -129,7 +130,11 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 
 
-
+	/**
+	 * Pairwise byte swap, i.e. change endianness of int16's. Won't work for 
+	 * anything else.
+	 * @param data
+	 */
 	public static void swapEndian(byte[] data)
 	{
 		for (int i = 0; i < data.length; i += 2)
@@ -171,8 +176,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 
 	@Override
-	public void init(LittleEndianDataInputStream bufinput, String innerXml, int id) {
-		this.bufInput = bufinput;
+	public void init(DataInput bufinput2, String innerXml, int id) {
+		this.bufInput = bufinput2;
 		this.chunkIds = new int[]{id};
 	}
 

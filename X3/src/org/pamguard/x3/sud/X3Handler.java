@@ -1,5 +1,7 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
+
 import org.pamguard.x3.x3.X3FrameDecode;
 import org.pamguard.x3.x3.X3FrameHeader;
 import org.w3c.dom.Document;
@@ -54,7 +56,7 @@ public class X3Handler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(LittleEndianDataInputStream inputStream, String innerXml, int id) {
+	public void init(DataInput inputStream, String innerXml, int id) {
 		
 		this.chunkIds = new int[]{id};
 		
