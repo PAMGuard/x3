@@ -1,5 +1,7 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
+
 import com.google.common.io.LittleEndianDataInputStream;
 
 
@@ -17,7 +19,7 @@ public interface ISudarDataHandler {
 	void close(); 
 	
 	
-	void init(LittleEndianDataInputStream inputStream, String innerXml, int id);
+	void init(DataInput inputStream, String innerXml, int id);
 	
 	
 	static public ISudarDataHandler createHandler(String ftype, String filePath) throws FileFormatNotSupportedException {

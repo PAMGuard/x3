@@ -1,5 +1,6 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
 import java.io.IOException;
 
 import com.google.common.io.LittleEndianDataInputStream;
@@ -32,7 +33,7 @@ public class SudHeader {
 		public int Crc; //Uint16
 		
 		
-		public static SudHeader deSerialise(LittleEndianDataInputStream dataInputStream) throws IOException {
+		public static SudHeader deSerialise(DataInput dataInputStream) throws IOException {
 			
 			SudHeader header = new SudHeader(); 
 			

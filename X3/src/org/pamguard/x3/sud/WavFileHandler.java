@@ -1,6 +1,8 @@
 package org.pamguard.x3.sud;
 
 
+import java.io.DataInput;
+
 import com.google.common.io.LittleEndianDataInputStream;
 
 /**
@@ -29,7 +31,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(LittleEndianDataInputStream inputStream, String innerXml, int id) {
+	public void init(DataInput inputStream, String innerXml, int id) {
 		this.chunkIds = new int[]{id};
 
 	}

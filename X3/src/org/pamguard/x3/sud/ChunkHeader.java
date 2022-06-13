@@ -1,5 +1,6 @@
 package org.pamguard.x3.sud;
 
+import java.io.DataInput;
 import java.io.IOException;
 
 import com.google.common.io.LittleEndianDataInputStream;
@@ -27,18 +28,18 @@ public class ChunkHeader {
 	
 	
 
-	public static ChunkHeader deSerialise(LittleEndianDataInputStream dataInputStream) throws IOException {
+	public static ChunkHeader deSerialise(DataInput bufinput) throws IOException {
 		
 		ChunkHeader header = new ChunkHeader(); 
 		
-		header.majicNo = dataInputStream.readUnsignedShort();
-		header.ChunkId = dataInputStream.readUnsignedShort();
-		header.DataLength = dataInputStream.readUnsignedShort();
-		header.SampleCount = dataInputStream.readUnsignedShort(); 
-		header.TimeS = dataInputStream.readInt();
-		header.TimeOffsetUs = dataInputStream.readInt();
-		header.DataCrc = dataInputStream.readUnsignedShort();
-		header.HeaderCrc = dataInputStream.readUnsignedShort();
+		header.majicNo = bufinput.readUnsignedShort();
+		header.ChunkId = bufinput.readUnsignedShort();
+		header.DataLength = bufinput.readUnsignedShort();
+		header.SampleCount = bufinput.readUnsignedShort(); 
+		header.TimeS = bufinput.readInt();
+		header.TimeOffsetUs = bufinput.readInt();
+		header.DataCrc = bufinput.readUnsignedShort();
+		header.HeaderCrc = bufinput.readUnsignedShort();
 
 		return header;
 	}
