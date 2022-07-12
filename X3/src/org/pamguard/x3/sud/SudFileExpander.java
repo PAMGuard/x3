@@ -1,7 +1,6 @@
 package org.pamguard.x3.sud;
 
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,8 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
-import com.google.common.io.LittleEndianDataInputStream;
 
 /**
  * Expands .sud files. 
@@ -94,8 +91,9 @@ public class SudFileExpander {
 
 					//				System.out.println("--------------");
 					//				System.out.println(chunkHeader.toHeaderString());
+					count++;
 
-					System.out.println("Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
@@ -103,13 +101,13 @@ public class SudFileExpander {
 
 					//process the chunk
 					processChunk(chunkHeader.ChunkId, chunkHeader, data);
+					
 
+//					//TEMP TEMP TEMP to just grab the first x3 file
+					//if (chunkHeader.ChunkId==3 && count>22) return;
 
 				}
 
-				//TEMP
-				count++;
-				if (count>25) return;
 			}
 			catch (EOFException eof) {
 				break;
@@ -134,10 +132,10 @@ public class SudFileExpander {
 
 		if (aHandler==null) return; 
 
-		if (aHandler.srdID > 0 ) {
+		if (aHandler.srcID > 0 ) {
 			//if the srcID > 0 there may be another data handler that needs to be used first. This will 
 			//recursively process data through all data handlers up until the srcID is zero. 
-			processChunk(aHandler.srdID,  ch, buf); //recursive
+			processChunk(aHandler.srcID,  ch, buf); //recursive
 		}
 		try {
 			aHandler.dataHandler.processChunk(ch, buf);

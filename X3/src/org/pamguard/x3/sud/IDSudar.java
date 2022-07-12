@@ -13,7 +13,7 @@ public class IDSudar {
 	 * The chunk may have a source ID - id a data handler to run before the iD data handler 
 	 * is run. 
 	 */
-	public int srdID = 0; 
+	public int srcID = 0; 
 	
 	/**
 	 * The ID to use

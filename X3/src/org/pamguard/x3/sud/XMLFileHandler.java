@@ -90,9 +90,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
 						idSudar.dataHandler = handler; 
 						if (srcid!=null) {
-							idSudar.srdID = Integer.valueOf(srcid.getNodeValue().trim()); 
+							idSudar.srcID = Integer.valueOf(srcid.getNodeValue().trim()); 
 						}
-						System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srdID); 
+						System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srcID); 
 						
 						dataHandlers.put(idSudar.iD , idSudar);
 					}

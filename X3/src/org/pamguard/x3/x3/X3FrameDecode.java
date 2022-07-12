@@ -19,6 +19,13 @@ public class X3FrameDecode {
 
 	public X3FrameDecode() {
 	}
+	
+//	short FixSign(short d, int nbits)
+//	{
+//		short half = (short)(1<<(nbits-1));
+//		short offs = (short)(half<<1);
+//		return (short)((d >= half) ? (int)d-offs : d);
+//	}
 
 	/**
 	 * Unpack a frame of X3 data. 
@@ -44,6 +51,8 @@ public class X3FrameDecode {
 		for (int i = 0; i < nChan; i++, j+=2) {
 			data[i] = (short) ((x3Data[j]&0xFF)<<8 | (x3Data[j+1]&0xFF));
 		}
+				
+		
 		nFrames--;
 		iBit = 8 * (2 * nChan + offset);
 		bits.skipBits(iBit);
@@ -52,7 +61,7 @@ public class X3FrameDecode {
 			int nBlock = Math.min(nFrames, blockLen);
 			for (int iChan = 0; iChan < nChan; iChan++) {
 				int codeType = bits.getBits(2);
-				System.out.println(String.format("rem frames %d chan %d code %d", nFrames, iChan, codeType));
+				//System.out.println(String.format("rem frames %d chan %d code %d", nFrames, iChan, codeType));
 				iBit +=2;
 				switch (codeType) {
 				case 1:
@@ -83,8 +92,9 @@ public class X3FrameDecode {
 	 * @param n number of samples to integrate
 	 * @param stride number of channels of interleaved data
 	 */
-	private static void integrate(short[] data, int offset, int n, int stride) {
+	public static void integrate(short[] data, int offset, int n, int stride) {
 		int p = offset;
+		//System.out.println("p: " + p + "  " + stride);
 		for (int i = 0; i <n; i++, p+= stride) {
 			data[p] += data[p-stride];
 		}
@@ -99,7 +109,7 @@ public class X3FrameDecode {
 	 * @param stride number of channels of interleaved data
 	 * @return 0 on success
 	 */
-	private static short bfpDecode(X3BitPacker bits, short[] outData, int offset, int n, int stride) {
+	public static short bfpDecode(X3BitPacker bits, short[] outData, int offset, int n, int stride) {
 		int bfBits = bits.getBits(4)+1;
 		//		if (bfBits != 8) {
 		//			System.out.println("BF Bits: " + bfBits);
@@ -127,7 +137,7 @@ public class X3FrameDecode {
 	 * @param stride number of channels of interleaved data
 	 * @return 0 on success
 	 */
-	private short unpackRice(X3BitPacker bits, int iRice, short[] outData, int offset, int n, int stride) {
+	public static short unpackRice(X3BitPacker bits, int iRice, short[] outData, int offset, int n, int stride) {
 		int p = offset;
 		for (int i = 0; i < n; i++, p+= stride) {
 			int count = 0;
@@ -137,12 +147,18 @@ public class X3FrameDecode {
 			//			int extra = bits.nextBits(iRice);
 			int index = (count<<iRice) + bits.getBits(iRice);
 			try {
+				System.out.println("p:  " + p);
+
 			outData[p] = irt[index];
 			}
 			catch (IndexOutOfBoundsException e) {
 				e.printStackTrace();
 			}
 		}
+		
+		System.out.println("outData:  " + outData[0] + "  " + outData[1]);
+
+		//System.out.println("stride: " +  stride + " n: " + n);
 		integrate(outData, offset, n, stride);
 		return 0;
 	}

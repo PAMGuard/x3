@@ -41,6 +41,14 @@ public class X3BitPacker {
 	}
 	
 	/**
+	 * gte the total number of bytes. 
+	 * @return the total number of bytes. 
+	 */
+	public int getNBytes() {
+		return bytes.length;
+	}
+	
+	/**
 	 * Read the next bit
 	 * @return the next bit
 	 */
@@ -72,7 +80,7 @@ public class X3BitPacker {
 	 * @param nBits number of bits to read
 	 * @return short integer read. 
 	 */
-	short getBits(int nBits) {
+	public short getBits(int nBits) {
 		short ans = 0;
 		while (nBits > 0) {
 			nBits--;
@@ -137,7 +145,7 @@ public class X3BitPacker {
 	 * @param nBits number of bits (including the sign bit)
 	 * @return signed data. 
 	 */
-	public short fixSign(short data, int nBits) {
+	public static short fixSign(short data, int nBits) {
 		short half = (short) (1<<(nBits-1)) ;
 		short offs = (short) (half<<1) ;
 		return (short) (data >= half ? data-offs : data);
@@ -155,6 +163,24 @@ public class X3BitPacker {
 	 */
 	public int getBytePos() {
 		return bytePos;
+	}
+	
+	/**
+	 * Get bytes from the current byte position. 
+	 * @param n - the number of bytes to get from the current byte position. 
+	 * @return an array of bytes
+	 */
+	public byte[] getBytes(int n) {
+		byte[] bytes = new byte[n]; 
+		int nn=0; 
+		for (int i=n; i<bytes.length+n; i++) {
+			bytes[nn]=this.bytes[i];
+			nn=nn+1;
+		}
+		this.bitPos=bitPos+8*n;
+		this.bytePos=bytePos+n;
+
+		return bytes;
 	}
 
 	/**
@@ -175,4 +201,94 @@ public class X3BitPacker {
 	public void clear() {
 		Arrays.fill(bytes, (byte)0);
 	}
+	
+	public long[] readIntLargerThan(long lev) throws Exception {
+		
+		int bits = 0;
+		long val = 0;
+		while(true) {
+			bits++;
+			if(bytePos > (bytes.length-1)) throw new Exception("The end of the byte array has been exceeded");
+			
+			
+			
+			
+			//if ((((bytes[bytePos+1] << 8) | bytes[bytePos]) & (0x8000>>>bitPos)) != 0)  val++;
+			//if((bytes[bytePos] & (0x8000>>>bitPos)) != 0) val++;
+			
+			
+			if ((convertTwoBytesToInt1(bytePos > (bytes.length-2) ? 0 :  bytes[bytePos+1],
+					bytes[bytePos]) & (0x8000>>>bitPos)) != 0)  val++;
+
+			bitPos++;
+			if(bitPos == 8) {
+				bytePos++;
+				bitPos=0;
+			}
+			
+			if(val >= lev) {
+				//outVal = val;
+				return new long[] {bits, val};
+			}
+			val <<= 1;
+		}
+	}
+	
+//	public static int convertTwoBytesToInt0(byte b1, byte b2) {
+//	    return((256 * b2) + b1);
+//	}
+//	
+//	public static int convertTwoBytesToInt2(byte b1, byte b2) {
+//	    return (int) (( (b2 & 0xFF) << 8) | (b1 & 0xFF));
+//	}
+	
+	
+	public static int convertTwoBytesToInt1(byte b1, byte b2) {
+	    return (int) ((b2 << 8) | (b1 & 0xFF));
+	}
+
+	
+	public int ReadInt(int bitsToRead) throws Exception {
+		
+		if(bitsToRead == 0) return 0;
+
+		if(bytePos > (bytes.length-1)) throw new Exception("The end of the byte array has been exceeded");
+		
+		int bitsToReadNow = Math.min(bitsToRead, 16 - bitPos);
+		
+		int shift = 16 - (bitPos + bitsToReadNow);
+		long mask = (long)(0x00000001 << (bitsToReadNow)) - 1;
+		
+		int data = convertTwoBytesToInt1(bytePos > (bytes.length-2) ? 0 :  bytes[bytePos+1], bytes[bytePos] ); 
+		//System.out.println("Data data:"  + data +  "   " + Short.toUnsignedInt((short) data) + "  " + this.bytePos); 
+		long val = (long) ((data >> shift) & mask);
+
+		
+		bitPos = bitPos+bitsToReadNow;
+		while(bitPos>=8) {
+			bytePos++;
+			bitPos = bitPos-8;
+		}
+
+
+		int bitsremaining = bitsToRead - bitsToReadNow;
+		if(bitsremaining > 0) {
+			val = val << bitsremaining;
+			val |= ReadInt( bitsremaining);
+		}
+		return (int) val;
+	}
+	
+//
+//	public int readInt(int nBits) {
+//		int ans = 0;
+//		while (nBits > 0) {
+//			nBits--;
+//			if (getBit()) 
+//			ans |= 1<<nBits;
+//		}
+//		return ans;
+//	}
+
+
 }
