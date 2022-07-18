@@ -7,9 +7,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioSystem;
 
 
 /**
+ * 
  * Expands .sud files. 
  * 
  * @author Jamie Macaulay
@@ -93,16 +99,15 @@ public class SudFileExpander {
 					//				System.out.println(chunkHeader.toHeaderString());
 					count++;
 
-					System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					//System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
 //					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
 
 					//process the chunk
-					processChunk(chunkHeader.ChunkId, chunkHeader, data);
+					processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
 					
-
 //					//TEMP TEMP TEMP to just grab the first x3 file
 					//if (chunkHeader.ChunkId==3 && count>22) return;
 
@@ -113,6 +118,13 @@ public class SudFileExpander {
 				break;
 			}
 		}
+		
+		//close everything. 
+		Iterator<Integer> keySet = dataHandlers.keySet().iterator();
+		while (keySet.hasNext()) {
+			dataHandlers.get(keySet.next()).dataHandler.close();
+		}
+		
 
 	}
 
@@ -123,7 +135,7 @@ public class SudFileExpander {
 	 * @param ch - the chunk header
 	 * @param buf - the data. 
 	 */
-	void processChunk(int chunkId, ChunkHeader ch, byte[] buf) {
+	void processChunk(int chunkId, Chunk sudChunk) {
 		//if (chunkId!=0) {
 		//does the data handler contain the chunkID?
 		//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
@@ -135,10 +147,10 @@ public class SudFileExpander {
 		if (aHandler.srcID > 0 ) {
 			//if the srcID > 0 there may be another data handler that needs to be used first. This will 
 			//recursively process data through all data handlers up until the srcID is zero. 
-			processChunk(aHandler.srcID,  ch, buf); //recursive
+			processChunk(aHandler.srcID,  sudChunk); //recursive
 		}
 		try {
-			aHandler.dataHandler.processChunk(ch, buf);
+			aHandler.dataHandler.processChunk(sudChunk);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -155,6 +167,7 @@ public class SudFileExpander {
 	public void processFile() throws IOException {
 		processFile(file); 
 	}
+	
 
 }
 

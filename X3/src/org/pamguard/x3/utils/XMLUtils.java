@@ -107,4 +107,38 @@ public class XMLUtils {
 		return nodesLeft;
 	}
 
+	/**
+	 * Get node content from a NodeList by name.
+	 * @param names - a list of the names to search for
+	 * @param nodeList - a list of the the contents for each name, 
+	 * @return a list of corresponding node vales - null if the value was not found. 
+	 */
+	public static HashMap<String, String>  getInnerNodeContent(String[]  names, NodeList nodeList) {
+		//String[] output =  new String[names.length];
+		
+		HashMap<String, String> output = new HashMap<String, String>(names.length);
+
+		if(nodeList!=null && nodeList.getLength() > 0) {
+			for (int i=0; i<nodeList.getLength(); i++) {
+
+				//System.out.println("Child Nodes len: " +  nodeList.item(i).getChildNodes().getLength()); 
+
+				for (int j=0; j< nodeList.item(i).getChildNodes().getLength(); j++) {
+
+					//System.out.println("Child Node Names: "+ nodeList.item(i).getChildNodes().item(j).getNodeName()+ " attributes" + nodeList.item(i).getChildNodes().item(j).getAttributes() + "   "  +j);
+
+					String content = nodeList.item(i).getChildNodes().item(j).getTextContent().trim();
+
+					for (int k=0; k<names.length; k++) {
+						if (nodeList.item(i).getChildNodes().item(j).getNodeName().equals(names[k])) {
+							output.put(names[k], content.trim());
+						}
+					}
+				}
+			}
+		}
+		
+		return output;
+	}
+
 }

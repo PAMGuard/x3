@@ -13,7 +13,7 @@ import com.google.common.io.LittleEndianDataInputStream;
  */
 public interface ISudarDataHandler {
 	
-	void processChunk(ChunkHeader ch, byte[] buf) throws Exception;
+	void processChunk(Chunk sudChunk) throws Exception;
 
 	
 	void close(); 

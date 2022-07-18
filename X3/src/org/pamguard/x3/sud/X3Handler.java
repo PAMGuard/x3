@@ -2,7 +2,9 @@
 package org.pamguard.x3.sud;
 
 import java.io.DataInput;
+import java.util.HashMap;
 
+import org.pamguard.x3.utils.XMLUtils;
 import org.pamguard.x3.x3.X3BitPacker;
 import org.pamguard.x3.x3.X3FrameDecode;
 import org.pamguard.x3.x3.X3FrameHeader;
@@ -49,9 +51,15 @@ public class X3Handler implements ISudarDataHandler {
 
 	int readCount = 0;
 	@Override
-	public void processChunk(ChunkHeader ch, byte[] buf) {
+	public void processChunk(Chunk sudChunk) {
 		
-		System.out.println("Process X3 chunk START: " + buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
+		byte[] buf = sudChunk.buffer;
+		ChunkHeader ch = sudChunk.chunkHeader;
+		
+		//System.out.println("Process X3 file: " + buf.length);
+
+		
+		//System.out.println("Process X3 chunk START: " + buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
 		
 		x3Head.setnSamples((short) ch.SampleCount);
 		x3Head.setCrcData((short) ch.DataCrc);
@@ -110,23 +118,24 @@ public class X3Handler implements ISudarDataHandler {
 		}
 		
 		
-		buf = new byte[bOut.length*2];
+		byte[] buf2 = new byte[bOut.length*2];
 		for(int i=0; i< bOut.length; i++) {
-			buf[i*2] = (byte)(bOut[i] & 0x00ff);
-			buf[(i*2)+1] = (byte)((bOut[i] >> 8)& 0x00ff);
+			buf2[i*2] = (byte)(bOut[i] & 0x00ff);
+			buf2[(i*2)+1] = (byte)((bOut[i] >> 8)& 0x00ff);
 		}
 		
+		sudChunk.buffer = buf2; 
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		
-		
+					
 //		System.out.println("Process X3 chunk: " + nChan);
 		//short[] wavData = x3FrameDecode.unpackX3Frame(x3Head, buf, 0, null,  blockLength); 
 		
-		System.out.println("Process X3 chunk END: " + buf.length + "  " + ch.SampleCount);
+		//System.out.println("Process X3 chunk END: " + buf.length + "  " + ch.SampleCount);
 
 	}
 
@@ -294,49 +303,33 @@ public class X3Handler implements ISudarDataHandler {
 		//NodeList nodeList = doc.getDocumentElement().getChildNodes();
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 				
-		
-		if(nodeList!=null && nodeList.getLength() > 0) {
-			for (int i=0; i<nodeList.getLength(); i++) {
+		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"BLKLEN", "NCHS"},  nodeList);
 
-				//System.out.println("Child Nodes len: " +  nodeList.item(i).getChildNodes().getLength()); 
+		blockLength = Integer.valueOf(nodeContent.get("BLKLEN"));
+		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
-				for (int j=0; j< nodeList.item(i).getChildNodes().getLength(); j++) {
-
-					//System.out.println("Child Node Names: "+ nodeList.item(i).getChildNodes().item(j).getNodeName()+ " attributes" + nodeList.item(i).getChildNodes().item(j).getAttributes() + "   "  +j);
-
-					String content = nodeList.item(i).getChildNodes().item(j).getTextContent().trim();
-
-					if (nodeList.item(i).getChildNodes().item(j).getNodeName().equals("BLKLEN")) {
-						blockLength = Integer.valueOf(content);
-					}
-					
-					if (nodeList.item(i).getChildNodes().item(j).getNodeName().equals("NCHS")) {
-						nChan = Integer.valueOf(content);
-					}
-
-					
-					//						Node nChan = nodeList.item(i).getChildNodes().item(j).getAttributes().getNamedItem("NCHS");
-					//						Node filter = nodeList.item(i).getChildNodes().item(j).getAttributes().getNamedItem("FILTER");
-					//
-
-					//					nodeList.item(i).getAttributes().getLength();
-					//					for (int jj=0; jj<nodeList.item(i).getChildNodes().item(j).getAttributes().getLength(); jj++) {
-					//						if (nodeList.item(i).getChildNodes().item(j).getAttributes()!=null) {
-					//						System.out.println("Attribute: " +  nodeList.item(i).getChildNodes().item(j).getAttributes().item(jj).getNodeName());
-					//						}
-					//					}
-					//						if (blocklength!=null) {
-					//							this.blockLength = Integer.valueOf(blocklength.getNodeValue()); 
-					//						}
-					//						if (nChan!=null) {
-					//							this.nChan = Integer.valueOf(nChan.getNodeValue()); 
-					//						}
-
-
-
-				}
-			}
-		}
+//		if(nodeList!=null && nodeList.getLength() > 0) {
+//			for (int i=0; i<nodeList.getLength(); i++) {
+//
+//				//System.out.println("Child Nodes len: " +  nodeList.item(i).getChildNodes().getLength()); 
+//
+//				for (int j=0; j< nodeList.item(i).getChildNodes().getLength(); j++) {
+//
+//					//System.out.println("Child Node Names: "+ nodeList.item(i).getChildNodes().item(j).getNodeName()+ " attributes" + nodeList.item(i).getChildNodes().item(j).getAttributes() + "   "  +j);
+//
+//					String content = nodeList.item(i).getChildNodes().item(j).getTextContent().trim();
+//
+//					if (nodeList.item(i).getChildNodes().item(j).getNodeName().equals("BLKLEN")) {
+//						blockLength = Integer.valueOf(content);
+//					}
+//					
+//					if (nodeList.item(i).getChildNodes().item(j).getNodeName().equals("NCHS")) {
+//						nChan = Integer.valueOf(content);
+//					}
+//
+//				}
+//			}
+//		}
 		
 		x3Head.setnChan(nChan);
 	
