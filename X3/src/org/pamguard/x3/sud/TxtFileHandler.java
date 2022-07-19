@@ -2,20 +2,23 @@ package org.pamguard.x3.sud;
 
 
 import java.io.DataInput;
-
-import com.google.common.io.LittleEndianDataInputStream;
+import java.io.File;
 
 public class TxtFileHandler implements ISudarDataHandler {
 
 	private int[] chunkIds;
+	
+	/**
+	 * The current sud file. 
+	 */
+	private File sudFile;
 
 	public TxtFileHandler(String filePath) {
-		// TODO Auto-generated constructor stub
+		this.sudFile = new File(filePath);
 	}
 
 	@Override
-	public void processChunk(ChunkHeader ch, byte[] buf) {
-		// TODO Auto-generated method stub
+	public void processChunk(Chunk sudChunk) {
 
 	}
 
@@ -23,6 +26,14 @@ public class TxtFileHandler implements ISudarDataHandler {
 	public void close() {
 		// TODO Auto-generated method stub
 
+	}
+	
+	int swapWords( int x ){
+		return ((x & 0x0000FFFF) << 16) | ((x & 0xFFFF0000) >> 16);
+	}
+	
+	public void SwapEndian(byte[] data) {
+		 XMLFileHandler.swapEndian(data);
 	}
 
 

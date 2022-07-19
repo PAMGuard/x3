@@ -38,18 +38,27 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	private DataInput bufInput;
 
 	private HashMap<Integer, IDSudar>  dataHandlers;
+
+	/**
+	 * The folder to save to. If null then saves to the same directory as the 
+	 */
+	private File outfolder;
 	
 
 	public XMLFileHandler(File sourceFile, File outFolder, String outName, HashMap<Integer, IDSudar> dataHandlers) {
 		this.fileName = sourceFile;
 		this.dataHandlers = dataHandlers;
+		this.outfolder = outFolder;
+		if (outfolder==null) {
+			this.outfolder = new File(sourceFile.getParent());
+		}
 	}
 
 	@Override
-	public void processChunk(ChunkHeader ch, byte[] buf) throws UnsupportedEncodingException {
-		swapEndian(buf); 
+	public void processChunk(Chunk subChunk) throws UnsupportedEncodingException {
+		swapEndian(subChunk.buffer); 
 
-		String xml = new String(buf, "UTF-8");
+		String xml = new String(subChunk.buffer, "UTF-8");
 		
 		System.out.println(xml);
 
@@ -69,7 +78,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		if(nodeList!=null && nodeList.getLength() > 0) {
 			for (int i=0; i<nodeList.getLength(); i++) {
 				
-				System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
+				//System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
 
 				
 
@@ -90,9 +99,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
 						idSudar.dataHandler = handler; 
 						if (srcid!=null) {
-							idSudar.srdID = Integer.valueOf(srcid.getNodeValue().trim()); 
+							idSudar.srcID = Integer.valueOf(srcid.getNodeValue().trim()); 
 						}
-						System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srdID); 
+						//System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srcID); 
 						
 						dataHandlers.put(idSudar.iD , idSudar);
 					}
