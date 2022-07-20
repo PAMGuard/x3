@@ -13,6 +13,8 @@ import java.util.Set;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioSystem;
 
+import org.apache.commons.io.FilenameUtils;
+
 
 /**
  * 
@@ -62,15 +64,11 @@ public class SudFileExpander {
 		DataInput bufinput;
 				bufinput = new SudDataInputStream(new FileInputStream(file));
 //		bufinput = new DataInputStream(new FileInputStream(file));
-
-
-
 		//		bufinput.
 		//		int nbytes = bufinput.available();
 
-
 		SudHeader sudHeader = SudHeader.deSerialise(bufinput);
-		System.out.println(sudHeader.toHeaderString());
+		//System.out.println(sudHeader.toHeaderString());
 		//		System.out.println("Bytes read: " + (nbytes-bufinput.available()));
 
 		dataHandlers.clear();
@@ -82,7 +80,15 @@ public class SudFileExpander {
 		 * the file defines which chunkID corresponds to which data handler. 
 		 */
 		XMLFileHandler xmlHandler = new XMLFileHandler(file, outFolder, outName, dataHandlers); 
-		xmlHandler.init(bufinput, "", 0);
+		
+		
+		//TODO - add out folder. 
+		String logFileName = FilenameUtils.removeExtension(file.getName()) + ".log.xml";
+
+		
+		LogFileStream logFile = new LogFileStream(logFileName);
+		
+		xmlHandler.init(logFile, "", 0);
 
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 
@@ -125,7 +131,7 @@ public class SudFileExpander {
 			dataHandlers.get(keySet.next()).dataHandler.close();
 		}
 		
-
+		logFile.close();
 	}
 
 
@@ -139,7 +145,6 @@ public class SudFileExpander {
 		//if (chunkId!=0) {
 		//does the data handler contain the chunkID?
 		//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
-
 		IDSudar aHandler = dataHandlers.get(chunkId); 
 
 		if (aHandler==null) return; 
@@ -155,7 +160,6 @@ public class SudFileExpander {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 

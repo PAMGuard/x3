@@ -6,7 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -26,17 +29,8 @@ import org.w3c.dom.NodeList;
  *
  */
 public class WavFileHandler implements ISudarDataHandler {
-
-	private int[] chunkIds;
-
-	private File sudFile;
-
-	private String fileName;
-
-	private File audioFile;
-
-	private PipedOutputStream pipedOutputStream;
-
+	
+	/***Info on the wav file****/
 	private Integer fs;
 
 	private String fileSuffix;
@@ -46,18 +40,35 @@ public class WavFileHandler implements ISudarDataHandler {
 	private Integer channel;
 
 	private Integer nchan = 1;
+	
+	/***The chunk IDs associated with wav file writing***/
+
+	private int[] chunkIds;
+
+	private File sudFile;
+	
+	/***Wav file writing using Java's in built Audio API****/
+
+	private String fileName;
+
+	private File audioFile;
+
+	private PipedOutputStream pipedOutputStream;
+
 
 	private AudioInputStream audioInputStream;
+	
+	private Thread writeThread;
 
-	public WavFileHandler(String filePath) {
-		this.sudFile = new File(filePath);
-
-		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
-	}
+	/***Xero drop out info****/
 	
 	long totalBytes = 0;
 
-	private Object lastChunk;
+	// the previous chunk to be written to the wav file. 
+	private Chunk lastChunk;
+	
+	//the value of the last error. 
+	private int lastError;
 
 	private int chunkCount;
 
@@ -65,8 +76,26 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private int cumulativeTimeErrorUs;
 
-	private Thread writeThread;
+	private boolean prevChunkWasNeg;
 
+	private Chunk firstChunk;
+
+	private boolean zeroFill;
+
+	private LogFileStream logFile;
+
+	
+	//the difference between the sample count and the device's on board clock before a correction is made
+	public static double timeErrorWarningThreshold = 0.04; //%
+
+
+
+	public WavFileHandler(String filePath) {
+		this.sudFile = new File(filePath);
+
+		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
+	}
+	
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
@@ -85,9 +114,62 @@ public class WavFileHandler implements ISudarDataHandler {
 		
 		try
 		{
-			
-			
+			//Test to see whether we need to zero fill drop outs. 
+			if (lastChunk==null) {
+				//the first chunk - nothing we can do here. 
+				this.firstChunk = sudChunk; 
+				
+			}
+			else {
+				int elapsedTimeS = (sudChunk.chunkHeader.TimeS - lastChunk.chunkHeader.TimeS);
+				
+				//the time between chunks in micoseconds
+				long elapsedTimeUs = (long)((elapsedTimeS * 1000000) + (sudChunk.chunkHeader.TimeOffsetUs - lastChunk.chunkHeader.TimeOffsetUs));
+				
+				//the time between chunks calculated using samples. 
+				long calculatedTime = (long)((long)lastChunk.chunkHeader.SampleCount * 1000000 / fs);
+				
+				//these two times should be the same, 
+				int error = (int) (elapsedTimeUs - calculatedTime);
+				cumulativeTimeErrorUs += error;
+				lastChunk = sudChunk;
+				
+				if ((timeCheck > 0) && (Math.abs(error) > (calculatedTime * timeErrorWarningThreshold))) {
+					//log warning
+					double t = (double)(sudChunk.chunkHeader.TimeS - firstChunk.chunkHeader.TimeS) + 
+							((double)((long)sudChunk.chunkHeader.TimeOffsetUs -  firstChunk.chunkHeader.TimeOffsetUs) / 1000000);
+					if (error > 0) {
+						if (!prevChunkWasNeg) {
+							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
+							logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							if (zeroFill) {
+								
+								int samplesToAdd = (int)(error * fs / 1000000);
+								byte[] fill = new byte[samplesToAdd * 2 * nchan];
+								pipedOutputStream.write(fill);
+
+								//fsWavOut.Write(fill, 0, fill.Length);
+								error = 0;
+								cumulativeSamples += samplesToAdd;
+								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+							}
+						}
+					} 
+					else {
+						prevChunkWasNeg = true;
+
+					}					
+				}
+				else {
+					prevChunkWasNeg = false;
+				}
+				lastError = error; 
+
+			}
+						
 			pipedOutputStream.write(sudChunk.buffer);
+			lastChunk = sudChunk;
+
 
 		}
 		catch (IOException e)
@@ -99,6 +181,29 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	@Override
 	public void close() {
+		
+		if (this.lastChunk!=null) {
+
+			// the format of your date
+			SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 
+			// give a timezone reference for formatting (see comment at the bottom)
+			SimpleDateFormat sdfLocal = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 
+			sdf.setTimeZone(TimeZone.getDefault()); 
+			
+			long recordPeriod = lastChunk.chunkHeader.TimeS - firstChunk.chunkHeader.TimeS;
+			recordPeriod *= 1000000;
+			recordPeriod += (long)lastChunk.chunkHeader.TimeOffsetUs - firstChunk.chunkHeader.TimeOffsetUs;
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "OffloaderTimeZone", TimeZone.getDefault().getDisplayName());
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingStartTimeLocal", String.format("%s", sdfLocal.format(new Date(firstChunk.chunkHeader.TimeS*1000L))));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingStopTimeLocal", String.format("%s", sdfLocal.format(new Date(lastChunk.chunkHeader.TimeS*1000L))));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingStartTimeUTC", String.format("%s", sdf.format(new Date(firstChunk.chunkHeader.TimeS*1000L))));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingStopTimeUTC", String.format("%s", sdf.format(new Date(lastChunk.chunkHeader.TimeS*1000L))));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingStartTimeSubS", String.format("%d us", firstChunk.chunkHeader.TimeOffsetUs));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SamplingTimePeriod", String.format("%d us", recordPeriod));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "CumulativeSamplingGap", String.format("%d us", cumulativeTimeErrorUs));
+			logFile.writeXML(chunkIds[0], "WavFileHandler", "SampleCount", String.format("%d", cumulativeSamples));
+		}
+		
 		//System.out.println("Close the file:"); 
 		try {
 			pipedOutputStream.flush();
@@ -133,7 +238,8 @@ public class WavFileHandler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(DataInput inputStream, String innerXml, int id) {
+	public void init(LogFileStream inputStream, String innerXml, int id) {
+		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
 		
 		

@@ -38,7 +38,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 
 
 	@Override
-	public void init(DataInput inputStream, String innerXml, int id) {
+	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.chunkIds = new int[]{id};
 
 	}

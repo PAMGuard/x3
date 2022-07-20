@@ -1,9 +1,5 @@
 package org.pamguard.x3.sud;
 
-import java.io.DataInput;
-
-import com.google.common.io.LittleEndianDataInputStream;
-
 
 /**
  * Interface for decoding a single chunk of a .sud file. 
@@ -13,13 +9,28 @@ import com.google.common.io.LittleEndianDataInputStream;
  */
 public interface ISudarDataHandler {
 	
+	/**
+	 * Process a chunk for the specific handler.
+	 * @param sudChunk - class which contains the chunk header and the data.
+	 * @throws Exception - might be triggered for example if writing a wav file
+	 */
 	void processChunk(Chunk sudChunk) throws Exception;
 
-	
+	/**
+	 * Called whenever it is time to close the file
+	 */
 	void close(); 
 	
-	
-	void init(DataInput inputStream, String innerXml, int id);
+	/**
+	 * Initialise the file handler. The start of the sud files contains xml chunks that define which handlers are
+	 * needed by the file. init(...) is called with the xml info from the initial chunk which contains metadata such as 
+	 * sample rate, number of channels etc. 
+	 * 
+	 * @param logFile - the log file. 
+	 * @param innerXml - the xml data for the chunk type. 
+	 * @param id - the id fo the chunks for this handler. 
+	 */
+	void init(LogFileStream logFile, String innerXml, int id);
 	
 	
 	static public ISudarDataHandler createHandler(String ftype, String filePath) throws FileFormatNotSupportedException {
@@ -32,7 +43,10 @@ public interface ISudarDataHandler {
 		}
 	}
 
-
+	/**
+	 * Get the chunk IDs.
+	 * @return the chunk IDs associated with this handler. 
+	 */
 	int[] getChunkID();
 
 }

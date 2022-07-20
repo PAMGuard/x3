@@ -35,8 +35,11 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	/**
 	 * The buffer input stream.
 	 */
-	private DataInput bufInput;
+	private LogFileStream logStream;
 
+	/**
+	 * The data handlers. 
+	 */
 	private HashMap<Integer, IDSudar>  dataHandlers;
 
 	/**
@@ -60,7 +63,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		System.out.println(xml);
+		//System.out.println(xml);
+		
+		logStream.print(xml);
 
 		//very important t o use trim or else throws an error
 		Document doc = convertStringToXMLDocument(xml.trim());
@@ -68,20 +73,13 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //		System.out.println(doc.getDocumentElement().toString());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getNodeName());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getAttributes().item(0));
-
-
 		NodeList nodeList = doc.getElementsByTagName("CFG"); 
 		
-		System.out.println("node len XML: " + nodeList.getLength()); 
-
-		
+		//System.out.println("node len XML: " + nodeList.getLength()); 		
 		if(nodeList!=null && nodeList.getLength() > 0) {
 			for (int i=0; i<nodeList.getLength(); i++) {
 				
 				//System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
-
-				
-
 //				System.out.println("CODEC: " + nodeList.item(i).getAttributes().getNamedItem("CODEC").getNodeValue()); 
 //				System.out.println("SUFFIX: " + nodeList.item(i).getAttributes().getNamedItem("SUFFIX").getNodeValue()); 
 				
@@ -93,7 +91,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 				if(ftype != null && id != null && Integer.valueOf(id.getNodeValue()) != 0) {
 					try {
 						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), fileName.getAbsolutePath());
-						handler.init(bufInput, xml, i);
+						handler.init(logStream, xml, i);
 						
 						IDSudar idSudar = new IDSudar(); 
 						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
@@ -158,7 +156,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	/**
 	 * Parse an xml string. 
 	 * @param xmlString - the xml string to parse
-	 * @return 
+	 * @return the xml document. 
 	 */
 	public static Document convertStringToXMLDocument(String xmlString) {
 		//Parser that produces DOM object trees from XML content
@@ -185,8 +183,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 
 	@Override
-	public void init(DataInput bufinput2, String innerXml, int id) {
-		this.bufInput = bufinput2;
+	public void init(LogFileStream bufinput2, String innerXml, int id) {
+		this.logStream = bufinput2;
+		
 		this.chunkIds = new int[]{id};
 	}
 
