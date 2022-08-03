@@ -1,6 +1,5 @@
 package org.pamguard.x3.sud;
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -13,8 +12,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-
-import com.google.common.io.LittleEndianDataInputStream;
 
 
 /**
@@ -63,7 +60,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		//System.out.println(xml);
+		System.out.println(xml);
 		
 		logStream.print(xml);
 
