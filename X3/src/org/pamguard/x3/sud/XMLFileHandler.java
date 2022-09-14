@@ -44,6 +44,11 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	 */
 	private File outfolder;
 	
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype = "xml";
+	
 
 	public XMLFileHandler(File sourceFile, File outFolder, String outName, HashMap<Integer, IDSudar> dataHandlers) {
 		this.fileName = sourceFile;
@@ -190,6 +195,12 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	public int[] getChunkID() {
 		return chunkIds;
 	}
+
+	@Override
+	public String getHandlerType() {
+		return ftype;
+	}
+
 
 
 }

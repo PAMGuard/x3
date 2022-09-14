@@ -1,9 +1,16 @@
 package org.pamguard.x3.sud;
 
 
-import java.io.DataInput;
 import java.io.File;
 
+
+/**
+ * Processes a text file chunk form a sud file. 
+ * <p>
+ * TODO - this file handler may never be used in standard .sud files and so has not been implemented. 
+ * @author Jamie Macaulay
+ *
+ */
 public class TxtFileHandler implements ISudarDataHandler {
 
 	private int[] chunkIds;
@@ -13,8 +20,14 @@ public class TxtFileHandler implements ISudarDataHandler {
 	 */
 	private File sudFile;
 
+	private String ftype;
+
 	public TxtFileHandler(String filePath) {
 		this.sudFile = new File(filePath);
+	}
+
+	public TxtFileHandler(String filePath, String ftype) {
+		this.ftype= ftype; 
 	}
 
 	@Override
@@ -46,6 +59,11 @@ public class TxtFileHandler implements ISudarDataHandler {
 	@Override
 	public int[] getChunkID() {
 		return chunkIds;
+	}
+
+	@Override
+	public String getHandlerType() {
+		return ftype;
 	}
 
 }

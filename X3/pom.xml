@@ -36,4 +36,39 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	
+	<licenses>
+		<license>
+			<name>Apache-2.0</name>
+			<url>https://opensource.org/licenses/apache-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/PAMGuard/x3.git</url>
+	</scm>
+	<developers>
+		<developer>
+			<id>macster110</id>
+			<name>Jamie Macaulay</name>
+			<roles>
+				<role>Developer</role>
+			</roles>
+		</developer>
+	</developers>
+	<description>Tools for opening X3 files</description>
+
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+  		<repository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository> 
+	</distributionManagement>
+	
 </project>

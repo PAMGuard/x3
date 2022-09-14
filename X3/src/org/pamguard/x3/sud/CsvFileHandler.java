@@ -1,7 +1,6 @@
 package org.pamguard.x3.sud;
 
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,17 +36,23 @@ public class CsvFileHandler implements ISudarDataHandler {
 	private File sudFile;
 
 	private String fileName;
+	
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype; 
 
 
-	public CsvFileHandler(String filePath) {
+	public CsvFileHandler(String filePath, String ftype) {
 		this.sudFile = new File(filePath);
 		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
+		this.ftype=ftype; 
 	}
 
 	@Override
 	public void processChunk(Chunk sudChunk) throws IOException {
 		
-		System.out.println("Read CSV:");
+		System.out.println("Read CSV: " + (fileName + fileSuffix + ".csv"));
 		if(sw == null) {
 			sw = new FileWriter(fileName + fileSuffix + ".csv", false);
 			sw.write(header);
@@ -99,4 +104,8 @@ public class CsvFileHandler implements ISudarDataHandler {
 		return chunkIds;
 	}
 
+	@Override
+	public String getHandlerType() {
+		return ftype;
+	}
 }

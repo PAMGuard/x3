@@ -39,12 +39,18 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private Integer channel;
 
-	private Integer nchan = 1;
+	/**
+	 * The number of channels.
+	 */
+	private Integer nChan = 1;
 	
 	/***The chunk IDs associated with wav file writing***/
 
 	private int[] chunkIds;
 
+	/**
+	 * The current sud file. 
+	 */
 	private File sudFile;
 	
 	/***Wav file writing using Java's in built Audio API****/
@@ -84,16 +90,24 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private LogFileStream logFile;
 
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype;
+
+	private Integer nBits; 
+
 	
 	//the difference between the sample count and the device's on board clock before a correction is made
 	public static double timeErrorWarningThreshold = 0.04; //%
 
 
 
-	public WavFileHandler(String filePath) {
+	public WavFileHandler(String filePath, String ftype) {
 		this.sudFile = new File(filePath);
 
 		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
+		this.ftype=ftype; 
 	}
 	
 
@@ -145,7 +159,7 @@ public class WavFileHandler implements ISudarDataHandler {
 							if (zeroFill) {
 								
 								int samplesToAdd = (int)(error * fs / 1000000);
-								byte[] fill = new byte[samplesToAdd * 2 * nchan];
+								byte[] fill = new byte[samplesToAdd * 2 * nChan];
 								pipedOutputStream.write(fill);
 
 								//fsWavOut.Write(fill, 0, fill.Length);
@@ -247,15 +261,16 @@ public class WavFileHandler implements ISudarDataHandler {
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 		
-		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS"},  nodeList);
+		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS"},  nodeList);
 		
 		
 //		for (int i=0; i<nodeContent.size(); i++) {
-//			System.out.println(nodeContent[i]);
+//			System.out.println(nodeContent.values().toArray()[i]);
 //		}
+
 		
 		channel = -1;
-		nchan = 1;
+		nChan = 1;
 		cumulativeTimeErrorUs = 0;
 		cumulativeSamples = 0;
 		chunkCount = 0;
@@ -263,12 +278,15 @@ public class WavFileHandler implements ISudarDataHandler {
 		
 		fs = Integer.valueOf(nodeContent.get("FS"));
 		fileSuffix = nodeContent.get("SUFFIX");
+		
+		nBits = Integer.valueOf(nodeContent.get("NBITS"));
+
 		if (nodeContent.get("TIMECHK")!=null) timeCheck = Integer.valueOf(nodeContent.get("TIMECHK"));
 		if (nodeContent.get("CHANNEL")!=null) channel = Integer.valueOf(nodeContent.get("CHANNEL"));
-		nchan = Integer.valueOf(nodeContent.get("NCHS"));
+		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
 		//create the audio format. 
-		AudioFormat audioFormat = new AudioFormat(fs, 16,nchan, true, false);
+		AudioFormat audioFormat = new AudioFormat(fs, 16,nChan, true, false);
 		
 		///create the wav writer
 		PipedInputStream pipedInputStream;
@@ -323,5 +341,34 @@ public class WavFileHandler implements ISudarDataHandler {
 //		System.out.println("Leave Wav write thread after n Bytes = " + totalBytes);
 	}
 
+	@Override
+	public String getHandlerType() {
+		return ftype;
+	}
+
+	/**
+	 * Get the sample rate in samples per second. 
+	 * @return the samples rate. 
+	 */
+	public float getSampleRate() {
+		return fs;
+	}
+
+	/**
+	 * Get the number of bits per sample. For a 16-bit reocridng this would be 16. 
+	 * @return the number of bits per sample. 
+	 */
+	public int getBitsPerSample() {
+		return nBits;
+	}
+
+	/**
+	 * Get the number of channels
+	 * @return the number of channels.
+	 */
+	public int getNChannels() {
+		return nChan;
+	}
+	
 
 }
