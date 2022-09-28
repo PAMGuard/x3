@@ -1,7 +1,6 @@
 package org.pamguard.x3.sud;
 
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -110,6 +109,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.ftype=ftype; 
 	}
 	
+	int count=0;
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
@@ -144,8 +144,8 @@ public class WavFileHandler implements ISudarDataHandler {
 				long calculatedTime = (long)((long)lastChunk.chunkHeader.SampleCount * 1000000 / fs);
 				
 				//these two times should be the same, 
-				int error = (int) (elapsedTimeUs - calculatedTime);
-				cumulativeTimeErrorUs += error;
+				int error = (int) (elapsedTimeUs - calculatedTime); //this is the total number of samples to add
+				cumulativeTimeErrorUs += error; 
 				lastChunk = sudChunk;
 				
 				if ((timeCheck > 0) && (Math.abs(error) > (calculatedTime * timeErrorWarningThreshold))) {
@@ -171,15 +171,15 @@ public class WavFileHandler implements ISudarDataHandler {
 					} 
 					else {
 						prevChunkWasNeg = true;
-
 					}					
 				}
 				else {
 					prevChunkWasNeg = false;
 				}
 				lastError = error; 
-
 			}
+			
+			//System.out.println("Write wav: " + ++count + " " + sudChunk.chunkHeader.HeaderCrc );
 						
 			pipedOutputStream.write(sudChunk.buffer);
 			lastChunk = sudChunk;
@@ -256,19 +256,15 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
 		
-		
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 		
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS"},  nodeList);
-		
-		
 //		for (int i=0; i<nodeContent.size(); i++) {
 //			System.out.println(nodeContent.values().toArray()[i]);
 //		}
 
-		
 		channel = -1;
 		nChan = 1;
 		cumulativeTimeErrorUs = 0;
@@ -338,7 +334,7 @@ public class WavFileHandler implements ISudarDataHandler {
 			e.printStackTrace();
 		}
 		//		System.out.println("Leave write Data");
-//		System.out.println("Leave Wav write thread after n Bytes = " + totalBytes);
+		//System.out.println("Leave Wav write thread after n Bytes = " + totalBytes);
 	}
 
 	@Override
@@ -355,7 +351,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	}
 
 	/**
-	 * Get the number of bits per sample. For a 16-bit reocridng this would be 16. 
+	 * Get the number of bits per sample. For a 16-bit recording this would be 16. 
 	 * @return the number of bits per sample. 
 	 */
 	public int getBitsPerSample() {

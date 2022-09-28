@@ -150,7 +150,7 @@ public class SudDataInputStream extends InputStream implements DataInput {
 		 public final void close() throws IOException {
 			 d.close();
 		 }
-	 
+		 
 		 private DataInputStream d; // to get at high level readFully methods of
 		 // DataInputStream
 		 private InputStream in; // to get at the low-level read methods of

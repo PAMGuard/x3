@@ -1,6 +1,5 @@
 package org.pamguard.x3.sud;
 
-import java.io.DataInput;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,11 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
-
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioSystem;
-
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -29,11 +23,6 @@ public class SudFileExpander {
 	 * The current .sud file. 
 	 */
 	private File file; 
-
-	/**
-	 * The folder to save .sud files to. 
-	 */
-	private File outFolder;
 
 	/**
 	 * The name of the output file. If null then the .sud file name is used. 
@@ -59,18 +48,19 @@ public class SudFileExpander {
 	 * The log file stream. 
 	 */
 	private LogFileStream logFile;
+	
+	/**
+	 * The current sud parameters. 
+	 */
+	private SudParams sudParams = new SudParams();
+
 
 
 	public SudFileExpander(File file) {
 		this.file = file; 
 	}
 	
-	public SudHeader openSudFile(File file) throws IOException {
-		
-		//create input stream to read the binary data.
-		bufinput = new SudDataInputStream(new FileInputStream(file));
-//		bufinput = new DataInputStream(new FileInputStream(file));
-		//		bufinput.
+	public SudHeader openSudFile(SudDataInputStream bufinput) throws IOException {
 		//		int nbytes = bufinput.available();
 
 		SudHeader sudHeader = SudHeader.deSerialise(bufinput);
@@ -85,7 +75,7 @@ public class SudFileExpander {
 		 * depending on the metadata in the file. The main reason this needs to be done is that
 		 * the file defines which chunkID corresponds to which data handler. 
 		 */
-		XMLFileHandler xmlHandler = new XMLFileHandler(file, outFolder, outName, dataHandlers); 
+		XMLFileHandler xmlHandler = new XMLFileHandler(file, sudParams.saveFolder == null ? null : new File(sudParams.saveFolder), outName, dataHandlers); 
 		
 		//TODO - add out folder. 
 		String logFileName = FilenameUtils.removeExtension(file.getName()) + ".log.xml";
@@ -97,6 +87,15 @@ public class SudFileExpander {
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
 		return sudHeader; 
+	}
+
+
+	public SudHeader openSudFile(File file) throws IOException {
+		
+		//create input stream to read the binary data.
+		bufinput = new SudDataInputStream(new FileInputStream(file));
+
+		return openSudFile(bufinput); 
 	}
 
 	/**
@@ -140,6 +139,15 @@ public class SudFileExpander {
 			}
 		}
 		
+		//close everything. 
+		closeFileExpander();
+	}
+	
+	
+	/**
+	 * Close the file expander, saving any current log, data and/or audio files. 
+	 */
+	public void closeFileExpander() {
 		//close everything. 
 		Iterator<Integer> keySet = dataHandlers.keySet().iterator();
 		while (keySet.hasNext()) {
@@ -265,9 +273,22 @@ public class SudFileExpander {
 	 * process different chunks. A .sud file may have one or more data handlers. 
 	 * @return the data handler map. 
 	 */
-	public HashMap<Integer, IDSudar>   getDataHandlers() {
+	public HashMap<Integer, IDSudar> getDataHandlers() {
 		return this.dataHandlers;
 	}
+
+	/**
+	 * Get the parameters for extracting the .sud file. This contains options such as whether to zeroPad, where and if to save files etc.
+	 * @return the parameters class that holds settings.
+	 */
+	public SudParams getSudParams() {
+		return this.sudParams;
+	}
+
+	public void resetInputStream() throws IOException {
+		bufinput = new SudDataInputStream(new FileInputStream(file));
+	}
+
 
 }
 
