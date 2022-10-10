@@ -1,5 +1,6 @@
 package org.pamguard.x3.sud;
 
+import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import org.apache.commons.io.FilenameUtils;
 
 
 /**
@@ -19,15 +19,6 @@ import org.apache.commons.io.FilenameUtils;
  */
 public class SudFileExpander {
 
-	/**
-	 * The current .sud file. 
-	 */
-	private File file; 
-
-	/**
-	 * The name of the output file. If null then the .sud file name is used. 
-	 */
-	private String outName = null; 
 
 	/**
 	 * Progress listeners. 
@@ -55,11 +46,15 @@ public class SudFileExpander {
 	private SudParams sudParams = new SudParams();
 
 
-
-	public SudFileExpander(File file) {
-		this.file = file; 
+	public SudFileExpander(File file, SudParams sudParams) {
+		this.sudParams = sudParams.clone(); 
+		this.sudParams.setSudFilePath(file.getAbsolutePath());
 	}
 	
+	public SudFileExpander(File sudFileIn) {
+		this(sudFileIn, new SudParams()); 
+	}
+
 	public SudHeader openSudFile(SudDataInputStream bufinput) throws IOException {
 		//		int nbytes = bufinput.available();
 
@@ -75,10 +70,10 @@ public class SudFileExpander {
 		 * depending on the metadata in the file. The main reason this needs to be done is that
 		 * the file defines which chunkID corresponds to which data handler. 
 		 */
-		XMLFileHandler xmlHandler = new XMLFileHandler(file, sudParams.saveFolder == null ? null : new File(sudParams.saveFolder), outName, dataHandlers); 
+		XMLFileHandler xmlHandler = new XMLFileHandler(sudParams, dataHandlers); 
 		
 		//TODO - add out folder. 
-		String logFileName = FilenameUtils.removeExtension(file.getName()) + ".log.xml";
+		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
 		logFile = new LogFileStream(logFileName);
 		
@@ -93,7 +88,7 @@ public class SudFileExpander {
 	public SudHeader openSudFile(File file) throws IOException {
 		
 		//create input stream to read the binary data.
-		bufinput = new SudDataInputStream(new FileInputStream(file));
+		bufinput = new SudDataInputStream(new BufferedInputStream(new FileInputStream(file)));
 
 		return openSudFile(bufinput); 
 	}
@@ -223,7 +218,7 @@ public class SudFileExpander {
 	 * @throws IOException 
 	 */
 	public void processFile() throws IOException {
-		processFile(file); 
+		processFile(new File(sudParams.getSudFilePath())); 
 	}
 	
 	/**
@@ -248,7 +243,7 @@ public class SudFileExpander {
 	 * @return the current sud file
 	 */
 	public File getSudFile() {
-		return file;
+		return new File(this.sudParams.getSudFilePath());
 	}
 
 	
@@ -257,7 +252,7 @@ public class SudFileExpander {
 	 * @param file - the .sud file. 
 	 */
 	public void setSudFile(File file) {
-		this.file = file;
+		sudParams.setSudFilePath(file.getAbsolutePath());
 	}
 
 	/**
@@ -269,24 +264,38 @@ public class SudFileExpander {
 	}
 
 	/**
-	 * Get the data handlers for the current sud file. The data handlers are classes that
-	 * process different chunks. A .sud file may have one or more data handlers. 
-	 * @return the data handler map. 
+	 * Get the data handlers for the current sud file. The data handlers are classes
+	 * that process different chunks. A .sud file may have one or more data
+	 * handlers.
+	 * 
+	 * @return the data handler map.
 	 */
 	public HashMap<Integer, IDSudar> getDataHandlers() {
 		return this.dataHandlers;
 	}
 
 	/**
-	 * Get the parameters for extracting the .sud file. This contains options such as whether to zeroPad, where and if to save files etc.
+	 * Get the parameters for extracting the .sud file. This contains options such
+	 * as whether to zeroPad, where and if to save files etc.
+	 * 
 	 * @return the parameters class that holds settings.
 	 */
 	public SudParams getSudParams() {
 		return this.sudParams;
 	}
+	
+	/**
+	 * Set the parameters for extracting the .sud file. This contains options such
+	 * as whether to zeroPad, where and if to save files etc.
+	 * 
+	 * @param the parameters class that holds settings.
+	 */
+	public void setSudParams(SudParams sudParams) {
+		this.sudParams = sudParams;
+	}
 
 	public void resetInputStream() throws IOException {
-		bufinput = new SudDataInputStream(new FileInputStream(file));
+		bufinput = new SudDataInputStream(new FileInputStream(sudParams.getSudFilePath()));
 	}
 
 

@@ -26,7 +26,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 		this.sudFile = new File(filePath);
 	}
 
-	public TxtFileHandler(String filePath, String ftype) {
+	public TxtFileHandler(SudParams filePath, String ftype) {
 		this.ftype= ftype; 
 	}
 
@@ -65,5 +65,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 	public String getHandlerType() {
 		return ftype;
 	}
+
+
 
 }

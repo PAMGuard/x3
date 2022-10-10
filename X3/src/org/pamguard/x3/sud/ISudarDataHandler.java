@@ -40,15 +40,18 @@ public interface ISudarDataHandler {
 	public String getHandlerType();
 	
 	
-	static public ISudarDataHandler createHandler(String ftype, String filePath) throws FileFormatNotSupportedException {
+	
+	static public ISudarDataHandler createHandler(String ftype, SudParams sudFileData) throws FileFormatNotSupportedException {
 		switch(ftype.toLowerCase()) {
-				case "x3v2": return new X3Handler(filePath,  ftype);
-				case "wav": return new WavFileHandler(filePath, ftype);
-				case "txt": return new TxtFileHandler(filePath, ftype);
-				case "csv": return new CsvFileHandler(filePath, ftype);
+				case "x3v2": return new X3Handler(sudFileData,  ftype);
+				case "wav": return new WavFileHandler(sudFileData, ftype);
+				case "txt": return new TxtFileHandler(sudFileData, ftype);
+				case "csv": return new CsvFileHandler(sudFileData, ftype);
 				default : throw new FileFormatNotSupportedException(String.format("FType %s not supported", ftype));
 		}
 	}
+	
+
 
 	/**
 	 * Get the chunk IDs.

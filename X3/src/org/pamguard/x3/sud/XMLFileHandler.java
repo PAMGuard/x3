@@ -38,25 +38,24 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	 * The data handlers. 
 	 */
 	private HashMap<Integer, IDSudar>  dataHandlers;
-
-	/**
-	 * The folder to save to. If null then saves to the same directory as the 
-	 */
-	private File outfolder;
 	
 	/**
 	 * A string enum to define the handler
 	 */
 	private String ftype = "xml";
 	
+	/**
+	 * True to save the xml file whenever a sud is read. 
+	 */
+	private boolean saveMeta = true; 
+	
+	private SudParams sudarParams; 
 
-	public XMLFileHandler(File sourceFile, File outFolder, String outName, HashMap<Integer, IDSudar> dataHandlers) {
-		this.fileName = sourceFile;
+	public XMLFileHandler(SudParams sudParams, HashMap<Integer, IDSudar> dataHandlers) {
 		this.dataHandlers = dataHandlers;
-		this.outfolder = outFolder;
-		if (outfolder==null) {
-			this.outfolder = new File(sourceFile.getParent());
-		}
+		this.saveMeta=sudParams.saveMeta;
+		this.sudarParams=sudParams;
+
 	}
 
 	@Override
@@ -67,7 +66,11 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		
 		//System.out.println(xml);
 		
-		logStream.print(xml);
+		
+		//save to the log file. 
+		if (this.saveMeta) {
+			logStream.print(xml);
+		}
 
 		//very important t o use trim or else throws an error
 		Document doc = convertStringToXMLDocument(xml.trim());
@@ -92,7 +95,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 				
 				if(ftype != null && id != null && Integer.valueOf(id.getNodeValue()) != 0) {
 					try {
-						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), fileName.getAbsolutePath());
+						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), sudarParams);
 						handler.init(logStream, xml, i);
 						
 						IDSudar idSudar = new IDSudar(); 
@@ -200,6 +203,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	public String getHandlerType() {
 		return ftype;
 	}
+
+
 
 
 

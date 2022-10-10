@@ -40,19 +40,25 @@ public class CsvFileHandler implements ISudarDataHandler {
 	/**
 	 * A string enum to define the handler
 	 */
-	private String ftype; 
+	private String ftype;
+
+	/**
+	 * True to save the csv. 
+	 */
+	private boolean saveMeta; 
 
 
-	public CsvFileHandler(String filePath, String ftype) {
-		this.sudFile = new File(filePath);
-		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
+	public CsvFileHandler(SudParams filePath, String ftype) {
+		this.sudFile = new File(filePath.getSudFilePath());
+		this.fileName =filePath.getOutFilePath();
 		this.ftype=ftype; 
+		this.saveMeta = filePath.saveMeta;
 	}
 
 	@Override
 	public void processChunk(Chunk sudChunk) throws IOException {
 		
-		System.out.println("Read CSV: " + (fileName + fileSuffix + ".csv"));
+		//System.out.println("Read CSV: " + (fileName + fileSuffix + ".csv"));
 		if(sw == null) {
 			sw = new FileWriter(fileName + fileSuffix + ".csv", false);
 			sw.write(header);
@@ -108,4 +114,6 @@ public class CsvFileHandler implements ISudarDataHandler {
 	public String getHandlerType() {
 		return ftype;
 	}
+
+
 }

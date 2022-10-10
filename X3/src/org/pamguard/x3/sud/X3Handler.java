@@ -50,7 +50,7 @@ public class X3Handler implements ISudarDataHandler {
 	private String ftype; 
 
 
-	public X3Handler(String filePath, String ftype) {
+	public X3Handler(SudParams filePath, String ftype) {
 		x3FrameDecode = new X3FrameDecode(); 
 		this.ftype = ftype; 
 	}
@@ -379,4 +379,6 @@ public class X3Handler implements ISudarDataHandler {
 	public String getHandlerType() {
 		return ftype;
 	}
+
+
 }

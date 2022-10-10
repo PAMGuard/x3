@@ -16,6 +16,10 @@ import com.google.common.io.LittleEndianDataInputStream;
  */
 public class ChunkHeader {
 	
+	/**
+	 * The total number of bytes in the chunk. 
+	 */
+	public static final long NUM_BYTES = 20;
 	
 	public int majicNo; //UInt16
 	public int ChunkId;  //UInt16
@@ -31,7 +35,7 @@ public class ChunkHeader {
 	public static ChunkHeader deSerialise(DataInput bufinput) throws IOException {
 		
 		ChunkHeader header = new ChunkHeader(); 
-		
+
 		header.majicNo = bufinput.readUnsignedShort();
 		header.ChunkId = bufinput.readUnsignedShort();
 		header.DataLength = bufinput.readUnsignedShort();
