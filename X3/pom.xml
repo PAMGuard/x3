@@ -32,11 +32,9 @@
 				<version>3.8.1</version>
 				<configuration>
 					<release>11</release>
-					<!-- -The bit below prevents  jar from being implemented -->
-					<!-- <compilerId>jdt</compilerId>
-					<compilerArguments>
-						<properties>.settings/org.eclipse.jdt.core.prefs</properties> make sure to use same params as what Eclipse uses
-					</compilerArguments> -->
+					<!-- -The bit below prevents jar from being implemented -->
+					<!-- <compilerId>jdt</compilerId> <compilerArguments> <properties>.settings/org.eclipse.jdt.core.prefs</properties> 
+						make sure to use same params as what Eclipse uses </compilerArguments> -->
 				</configuration>
 			</plugin>
 
@@ -51,14 +49,40 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-<!-- 							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.pamguard.x3.sud.SudarFileTest</mainClass>
-								</transformer>
-							</transformers> -->
+							<!-- <transformers> <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> 
+								<mainClass>org.pamguard.x3.sud.SudarFileTest</mainClass> </transformer> </transformers> -->
 						</configuration>
 
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<!-- <source>8</source> <detectJavaApiLink>false</detectJavaApiLink> -->
+					<failOnError>false</failOnError>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>

@@ -101,6 +101,8 @@ public class WavFileHandler implements ISudarDataHandler {
 	 */
 	private boolean saveWav = true;
 
+	private boolean saveMeta;
+
 
 	//the difference between the sample count and the device's on board clock before a correction is made
 	public static double timeErrorWarningThreshold = 0.04; //%
@@ -111,6 +113,8 @@ public class WavFileHandler implements ISudarDataHandler {
 
 		this.fileName = filePath.getOutFilePath();
 		this.saveWav = filePath.saveWav;
+		this.saveMeta = filePath.saveMeta;
+
 		this.zeroFill = filePath.zeroPad;
 
 		this.ftype=ftype; 
@@ -162,18 +166,20 @@ public class WavFileHandler implements ISudarDataHandler {
 					if (error > 0) {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
-							logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
 							if (zeroFill) {
 
 								//System.out.println("Error: " + error + " " + nChan ); 
 								int samplesToAdd = (int)(error * (fs / 1000000));
 								byte[] fill = new byte[samplesToAdd * 2 * nChan];
-								pipedOutputStream.write(fill);
+								if (saveWav) {
+									pipedOutputStream.write(fill);
+								}
 
 								//fsWavOut.Write(fill, 0, fill.Length);
 								error = 0;
 								cumulativeSamples += samplesToAdd;
-								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
 							}
 						}
 					} 
@@ -206,7 +212,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	@Override
 	public void close() {
 
-		if (this.lastChunk!=null) {
+		if (this.lastChunk!=null && saveMeta) {
 
 			// the format of your date
 			SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 

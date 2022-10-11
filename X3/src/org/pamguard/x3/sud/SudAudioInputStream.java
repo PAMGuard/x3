@@ -2,8 +2,13 @@ package org.pamguard.x3.sud;
 
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -61,6 +66,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * A list of all the header chunks in the sud file. 
 	 */
 	private ArrayList<ChunkHeader> chunkHeaderMap;
+	
 
 	
 	/**
@@ -137,34 +143,22 @@ public class SudAudioInputStream extends AudioInputStream {
 
 
 	/**
-	 * Open a sud input stream.
-	 * <p>
-	 * This function reads a .sud file, figures out if it contains acoustic data,
-	 * creates an AudioFormat object form header data and prepares a
-	 * SudAudioInputStream ready to read audioData.
-	 * 
-	 * @param file    - the .sud file.
-	 * @param sudparams -  the parameters for opening the sud file. 
-	 * @param verbose - true to print more information on the output stream.
-	 * @return a SudAudioInputStream which can be used to stream audio data e.g. in
-	 *         a similar way to a raw .wav file.
-	 * @throws Exception - throws an exception if the file is incorrect or the .sud
-	 *                   file does not contain audio data.
+	 * Create a map of the .sud file.  This includes the number of uncompressed samples and map of all headers. 
+	 * @param sudFileExpander - the sud file expander. 
+	 * @param verbose -true for more console ouput. 
+	 * @return object with info the sud file. 
+	 * @throws Exception 
 	 */
-	public static SudAudioInputStream openInputStream(File file, SudParams params, boolean verbose) throws Exception {
-
-		//create the sud file expander. 
-		SudFileExpander sudFileExpander = new SudFileExpander(file, params);
-
-		/*
-		 * Read the .sud header
-		 */
-		SudHeader sudHeader = sudFileExpander.openSudFile(file);
+	public static SudFileMap mapSudFile(SudFileExpander sudFileExpander, boolean verbose) throws Exception {
+		
+		SudHeader sudHeader = sudFileExpander.openSudFile(sudFileExpander.getSudFile());
 
 		// ArrayList<Integer> totalWavSamplesChunk = new ArrayList<Integer>();
 
 		ChunkHeader lastWavChunk = null;
 		WavFileHandler wavFileHandler = null;
+		
+		
 		long totalSamples = 0;
 		// int mark = 0;
 
@@ -246,20 +240,81 @@ public class SudAudioInputStream extends AudioInputStream {
 			}
 		}
 		
+		SudFileMap sudMap = new SudFileMap(); 
+		
+		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
+		
+		sudMap.chunkHeaderMap = chunkHeaderMap;
+		sudMap.totalSamples = totalSamples;
+		sudMap.sampleRate = wavFileHandler.getSampleRate();
+		sudMap.zeroPad = sudFileExpander.getSudParams().zeroPad; 
+		sudMap.bitsPerSample = wavFileHandler.getBitsPerSample(); 
+		sudMap.nChannels = wavFileHandler.getNChannels();
+
+		return sudMap; 
+	}
+	
+	
+	/** 
+	 * Open a sud input stream.
+	 * <p>
+	 * This function reads a .sud file, figures out if it contains acoustic data,
+	 * creates an AudioFormat object form header data and prepares a
+	 * SudAudioInputStream ready to read audioData.
+	 * 
+	 * @param file    - the .sud file.
+	 * @param sudparams -  the parameters for opening the sud file. 
+	 * @param verbose - true to print more information on the output stream.
+	 * @return a SudAudioInputStream which can be used to stream audio data e.g. in
+	 *         a similar way to a raw .wav file.
+	 * @throws Exception - throws an exception if the file is incorrect or the .sud
+	 *                   file does not contain audio data.
+	 */
+	public static SudAudioInputStream openInputStream(File file, SudParams params, boolean verbose) throws Exception {
+
+		//create the sud file expander. 
+		SudFileExpander sudFileExpander = new SudFileExpander(file, params);
+
+		//does the sud file map exist?
+		File sudMapFileName = new File(file.getAbsoluteFile() + "x"); 
+		SudFileMap sudFileMap = null;
+		if (sudMapFileName.exists()) {
+			SudFileMap loadedFileMap ; 
+			try {
+				loadedFileMap = loadSudMap(sudMapFileName); 
+			}	
+			catch (Exception e) {
+				e.printStackTrace(); 
+				System.err.println("Could not open .sudx file map"); 
+				loadedFileMap = null; 
+			}
+			
+			if (loadedFileMap == null || loadedFileMap.zeroPad!=params.zeroPad) {
+				sudFileMap = null; 
+			}
+			else sudFileMap = loadedFileMap; 
+		}
+		
+		
+		//if the file map not exist then make it. 
+		if (sudFileMap==null) {
+			sudFileMap = mapSudFile(sudFileExpander, verbose); 
+			saveSudMap(sudFileMap, sudMapFileName); 
+		}
+		
 		//long time2 = System.currentTimeMillis();
 		
 //		System.out.println("Time to run through all headers: " + (time2 - time1));
-
-
-		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
-
-		int blockAlign = wavFileHandler.getNChannels() * (wavFileHandler.getBitsPerSample() / 8);
+		
+		
+		
+		int blockAlign = sudFileMap.getNChannels() * (sudFileMap.getBitsPerSample() / 8);
 
 		// Create the audio format from the data in the .sud file data handler header.
-		AudioFormat audioFormat = new AudioFormat(getEncoding(FMT_SUD_TAG), wavFileHandler.getSampleRate(),
-				wavFileHandler.getBitsPerSample(), wavFileHandler.getNChannels(), blockAlign,
-				wavFileHandler.getSampleRate(), false);
-
+		AudioFormat audioFormat = new AudioFormat(getEncoding(FMT_SUD_TAG), sudFileMap.getSampleRate(),
+				sudFileMap.getBitsPerSample(), sudFileMap.getNChannels(), blockAlign,
+				sudFileMap.getSampleRate(), false);
+		
 		// Now iterate through the file until we get to the very first X3
 
 		sudPrint("Reset the input stream: ", verbose);
@@ -279,7 +334,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		// long nFrames = wavHeader.getDataSize() / wavHeader.getBlockAlign();
 
 		SudAudioInputStream sudAudioInputStream = new SudAudioInputStream(sudFileExpander, audioFormat,
-				totalSamples * (wavFileHandler.getBitsPerSample() / 8), chunkHeaderMap);
+				sudFileMap.totalSamples * (sudFileMap.getBitsPerSample() / 8), sudFileMap.chunkHeaderMap);
 
 		sudAudioInputStream.setVerbose(verbose);
 
@@ -287,6 +342,28 @@ public class SudAudioInputStream extends AudioInputStream {
 		sudAudioInputStream.nextChunk();
 
 		return sudAudioInputStream;
+	}
+	
+	private static void saveSudMap(SudFileMap sudMap, File file) throws IOException {
+		FileOutputStream fileOutputStream
+	      = new FileOutputStream(file);
+	    ObjectOutputStream objectOutputStream 
+	      = new ObjectOutputStream(fileOutputStream);
+	    objectOutputStream.writeObject(sudMap);
+	    objectOutputStream.flush();
+	    objectOutputStream.close();
+	}
+	
+	
+	private static SudFileMap loadSudMap(File file) throws IOException, ClassNotFoundException {
+		FileInputStream fileInputStream
+	      = new FileInputStream(file);
+	    ObjectInputStream objectInputStream
+	      = new ObjectInputStream(fileInputStream);
+	    SudFileMap p2 = (SudFileMap) objectInputStream.readObject();
+	    objectInputStream.close(); 
+	    return  p2; 
+	 
 	}
 
 	/**
@@ -461,7 +538,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * @return the length in sample frames
 	 */
 	public long getFrameLength() {
-		return frameLength;
+		return this.totalBytes/getFormat().getFrameSize();
 	}
 
 	/**
@@ -557,12 +634,22 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	@Override
 	public long skip(long n) throws IOException {
+		
+		  // make sure not to skip fractional frames
+        final long reminder = n % frameSize;
+        if (reminder != 0) {
+            n -= reminder;
+        }
+        if (n <= 0) {
+            return 0;
+        }
+                
 		/**
 		 * Skipping is a little tricky because we don't want to decompress every X3
 		 * chunk on the way to getting to the right spot.
 		 */
 
-		long time1 = System.currentTimeMillis();
+		//long time1 = System.currentTimeMillis();
 
 		/**
 		 * There are two options here; 1) There are enough samples in the buffer for a
@@ -580,9 +667,9 @@ public class SudAudioInputStream extends AudioInputStream {
 			bytesRead = (int) (bytesRead + n);
 		}
 		
-		long time2 = System.currentTimeMillis();
+		//long time2 = System.currentTimeMillis();
 
-		System.out.println("Skip time...: " + (time2 - time1));
+		//System.out.println("Skip time...: " + (time2 - time1));
 
 		return -1;
 
@@ -711,9 +798,9 @@ public class SudAudioInputStream extends AudioInputStream {
 	public static void main(String[] args) {
 
 		long time0 = System.currentTimeMillis();
-		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
-		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
-		
+		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
+		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
+		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
 		SudAudioInputStream sudAudioInputStream = null;
 		
 		SudParams sudParams = new SudParams(); 
@@ -721,6 +808,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		sudParams.saveWav = true; 
 
 		boolean verbose = false; // true to print more stuff.
+		
 		try {
 			
 			sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);

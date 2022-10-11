@@ -2,6 +2,7 @@ package org.pamguard.x3.sud;
 
 import java.io.DataInput;
 import java.io.IOException;
+import java.io.Serializable;
 
 import com.google.common.io.LittleEndianDataInputStream;
 
@@ -14,12 +15,17 @@ import com.google.common.io.LittleEndianDataInputStream;
  * @author Jamie Macaulay
  *
  */
-public class ChunkHeader {
+public class ChunkHeader implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * The total number of bytes in the chunk. 
 	 */
-	public static final long NUM_BYTES = 20;
+	public static final transient long NUM_BYTES = 20;
 	
 	public int majicNo; //UInt16
 	public int ChunkId;  //UInt16
@@ -63,8 +69,6 @@ public class ChunkHeader {
 				+ "HeaderCrc: %d\n", 
 				majicNo, ChunkId, DataLength, SampleCount, TimeS, TimeOffsetUs, DataCrc, 
 				HeaderCrc);
-		
-		
 	}
 
 }
