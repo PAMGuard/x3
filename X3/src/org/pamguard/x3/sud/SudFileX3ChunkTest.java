@@ -5,9 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.pamguard.x3.x3.RiceTable;
+
 
 /**
  * Prints out the first X3 and corresponding wav chunk
+ * 
  * @author Jamie Macaulay 
  *
  */
@@ -21,6 +24,7 @@ public class SudFileX3ChunkTest {
 
 	public void testSudFile(File sudFileIn, File wavFileOut) {
 
+		SudParams sudParams = new SudParams(); 
 		SudFileExpander sudFileExpander = new SudFileExpander(sudFileIn); 
 
 		AtomicInteger count = new AtomicInteger(0); 
@@ -54,9 +58,7 @@ public class SudFileX3ChunkTest {
 		//convert to wav file data. 
 		short[] wavData = new short[(int) wav.length/2]; 
 		for (int i=0; i<wav.length; i=i+2) {
-			wavData[(int) i/2]  = (short)
-					(
-							((wav[i] & 0xFF))
+			wavData[(int) i/2]  = (short) (((wav[i] & 0xFF))
 							| (short)((wav[i+1] & 0xFF) << 8 )
 							);
 		};
@@ -66,7 +68,7 @@ public class SudFileX3ChunkTest {
 			FileWriter myWriter = new FileWriter(wavFileOut);
 			myWriter.write(shortArr2String(wavData));
 			myWriter.close();
-			System.out.println("Successfully wrote "  + wavData.length + " samples to the file.");
+			System.out.println("Successfully wrote "  + wav.length + " bytes to the file from: " + x3.length + " compressed bytes.");
 		} catch (IOException e) {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
@@ -77,7 +79,10 @@ public class SudFileX3ChunkTest {
 
 	public static String chunkData2String(Chunk sudChunk) {
 		String arr = ""; 
-		for (int i=0; i<sudChunk.buffer.length; i++) {
+//		for (int i=0; i<sudChunk.buffer.length; i++) {
+//			arr += (sudChunk.buffer[i] + ","); 
+//		}
+		for (int i=0; i<50; i++) {
 			arr += (sudChunk.buffer[i] + ","); 
 		}
 		return arr; 
@@ -94,20 +99,25 @@ public class SudFileX3ChunkTest {
 
 	public static void main(String[] args) {
 		System.out.println("Hello .sud file decompression");
-
 		//		String filePath = "/Users/au671271/MATLAB-Drive/MATLAB/PAMGUARD/x3/335564854.180411000003.sud";
 		//		String filePath = "/Volumes/GoogleDrive-108005893101854397430/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
 		String sudFileInPath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
 
 		//save to a file inside s a folder containing some C code to write .sud files. 
-		String wavFileOutPath = "/Users/au671271/Documents/X3/testWav.txt";
+		String wavFileOutPath = "/Users/au671271/Documents/testWav.txt";
 
 		SudFileX3ChunkTest sudFileX3ChunkTest = new SudFileX3ChunkTest(); 
 
 		sudFileX3ChunkTest.testSudFile(new File(sudFileInPath), new File(wavFileOutPath)); 
+		
+		 short[] irt = RiceTable.makeInverseRice(20);
+		 String arr = ""; 
+			for (int i=0; i<irt.length; i++) {
+				arr += (irt[i] + ","); 
+			}
+	System.out.println(arr);
+
 
 	}
-
-
 
 }

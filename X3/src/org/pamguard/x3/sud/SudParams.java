@@ -36,6 +36,11 @@ public class SudParams implements Cloneable {
 	
 	
 	private String sudFilePath = null;
+	
+	/**
+	 * True to output more verbose data - use for debugging. 
+	 */
+	private boolean verbose = false;
 
 
 	public String getSudFilePath() {

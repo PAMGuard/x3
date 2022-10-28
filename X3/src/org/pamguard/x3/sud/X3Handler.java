@@ -321,6 +321,8 @@ public class X3Handler implements ISudarDataHandler {
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"BLKLEN", "NCHS"},  nodeList);
 
 		blockLength = Integer.valueOf(nodeContent.get("BLKLEN"));
+		
+		System.out.println("Block Length: " + blockLength);
 		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
 //		if(nodeList!=null && nodeList.getLength() > 0) {
