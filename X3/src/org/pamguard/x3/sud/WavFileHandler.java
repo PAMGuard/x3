@@ -129,7 +129,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
-			audioFile = new File(fileName + fileSuffix + ".wav");
+			audioFile = new File(fileName + "." + fileSuffix); //can be dwv or wav
 			if (audioFile.exists()) {
 				audioFile.delete();
 			}

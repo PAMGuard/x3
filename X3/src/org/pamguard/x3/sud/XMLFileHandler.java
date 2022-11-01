@@ -64,7 +64,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		//System.out.println(xml);
+		System.out.println(xml);
 		
 		
 		//save to the log file. 
