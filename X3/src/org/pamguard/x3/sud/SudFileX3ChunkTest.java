@@ -31,15 +31,15 @@ public class SudFileX3ChunkTest {
 
 		sudFileExpander.addSudFileListener((chunkID, sudChunk)->{
 
-			if (sudFileExpander.getChunkIDString(chunkID).equals("X3V2") && count.get()<MAX_PRINT) {
-				System.out.print(sudFileExpander.getChunkIDString(chunkID) +" x3 DATA:");
+			if (sudFileExpander.getChunkFileType(chunkID).equals("X3V2") && count.get()<MAX_PRINT) {
+				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" x3 DATA:");
 				sudChunk.chunkHeader.toHeaderString(); 
 				System.out.println(chunkData2String(sudChunk));
 				x3=sudChunk.buffer;
 			}
 
-			if (sudFileExpander.getChunkIDString(chunkID).equals("wav") && count.get()<MAX_PRINT) {
-				System.out.print(sudFileExpander.getChunkIDString(chunkID) +" WAV DATA:");
+			if (sudFileExpander.getChunkFileType(chunkID).equals("wav") && count.get()<MAX_PRINT) {
+				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" WAV DATA:");
 				sudChunk.chunkHeader.toHeaderString(); 
 				System.out.println(chunkData2String(sudChunk));
 				count.set(count.get()+1); 

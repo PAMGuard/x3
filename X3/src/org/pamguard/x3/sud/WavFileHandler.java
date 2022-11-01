@@ -209,6 +209,10 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	}
 
+	public String getFileSuffix() {
+		return fileSuffix;
+	}
+
 	@Override
 	public void close() {
 

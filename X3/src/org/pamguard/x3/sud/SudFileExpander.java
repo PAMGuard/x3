@@ -177,7 +177,7 @@ public class SudFileExpander {
 		}
 		try {
 			for (int i=0; i<this.sudFileListener.size(); i++) {
-				sudFileListener.get(i).chunkProcessed(chunkId, sudChunk); 
+				sudFileListener.get(i).chunkProcessed(chunkId,  sudChunk); 
 			}
 			
 			aHandler.dataHandler.processChunk(sudChunk);
@@ -190,17 +190,35 @@ public class SudFileExpander {
 	}
 	
 	/**
+	 * Check whether a chunk ID is an uncompressed chunk of wav data from continuous
+	 * recordings (could also be uncompressed wav data from click detections)
+	 * 
+	 * @return true if the chunkID contains uncompressed wav data from continuous or
+	 *         duty samples recordings.
+	 */
+	public boolean isChunkIDWav(int chunkID) {
+		if (getChunkFileType(chunkID).equals("wav")) {
+			WavFileHandler wavHandler = (WavFileHandler) getChunkDataHandler(chunkID).dataHandler;
+			if (wavHandler.getFileSuffix().equals("wav"))
+				return true;
+			else
+				return false; // probably dwv file for click detections.
+		} else
+			return false;
+	}
+	
+	/**
 	 * Get the string name for the chunk ID. Note that a .sud file can have
 	 * different numbers and versions of data handlers and so the chunkID is not
 	 * unique between files. The chunk string is unique.
 	 * <p>
 	 * Note: this function call only be called after processChunk has been called.
 	 * 
-	 * @param chunkID
-	 * @return the string name of the handler associated with the chunkID or null if
+	 * @param chunkID - the ID of the chunk.
+	 * @return the string file type name of the handler associated with the chunkID or null if
 	 *         there is no handler associated with the chunkID. 
 	 */
-	public String getChunkIDString(int chunkID) {
+	public String getChunkFileType(int chunkID) {
 		IDSudar aHandler = dataHandlers.get(chunkID); 
 
 		if (aHandler!=null) {
@@ -209,7 +227,15 @@ public class SudFileExpander {
 		else {
 			return null; 
 		} 
-
+	}
+	
+	/**
+	 * Get the data handler instance for a chunkID 
+	 * @param chunkID - the ID of the chunk. 
+	 * @return the data handler instance to process the chunk. 
+	 */
+	public  IDSudar getChunkDataHandler(int chunkID) {
+		return dataHandlers.get(chunkID); 
 	}
 
 	/**

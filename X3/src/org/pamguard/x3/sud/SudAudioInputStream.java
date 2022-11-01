@@ -82,7 +82,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.totalBytes = length;
 		sudFileExpander.addSudFileListener((chunkId, chunk) -> {
 			// here is the wav data
-			if (sudFileExpander.getChunkIDString(chunkId).equals("wav")) {
+			if (sudFileExpander.getChunkFileType(chunkId).equals("wav")) {
 				sudPrint("New wav data: No. bytes: " + chunk.buffer.length + " Total samples read: " + bytesRead
 						+ " of " + totalBytes);
 				this.audioBuffer = chunk.buffer;
@@ -198,7 +198,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					// System.out.println(sudFileExpander.getChunkIDString(chunkHeader.ChunkId));
 
 					// count the number of samples.
-					if (sudFileExpander.getChunkIDString(chunkHeader.ChunkId).equals("wav")) {
+					if (sudFileExpander.isChunkIDWav(chunkHeader.ChunkId)) {
 
 						sudPrint("HeaderCrc: " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
 
@@ -252,6 +252,17 @@ public class SudAudioInputStream extends AudioInputStream {
 		sudMap.nChannels = wavFileHandler.getNChannels();
 
 		return sudMap; 
+	}
+	
+	/**
+	 * Check whether a chunk ID is an uncompressed chunk of wav data from continuous
+	 * recordings (could also be uncompressed wav data from click detections)
+	 * 
+	 * @return true if the chunkID contains uncompressed wav data from continuous or
+	 *         duty samples recordings.
+	 */
+	public boolean isChunkIDWav(int chunkID) {
+		return this.sudFileExpander.isChunkIDWav(chunkID); 
 	}
 	
 	
@@ -444,7 +455,7 @@ public class SudAudioInputStream extends AudioInputStream {
 
 					byte[] data = new byte[chunkHeader.DataLength];
 
-					if (sudFileExpander.getChunkIDString(chunkHeader.ChunkId).equals("wav")) {
+					if (isChunkIDWav(chunkHeader.ChunkId)) {
 						// how many samples are in this chunk
 						int bytesInChunk = (this.getFormat().getSampleSizeInBits() / 8) * nWavSamples(chunkHeader,
 								lastWavChunk, this.getFormat().getSampleRate(), sudFileExpander.getSudParams().zeroPad);
@@ -454,7 +465,7 @@ public class SudAudioInputStream extends AudioInputStream {
 							sudFileExpander.getSudInputStream().readFully(data);
 
 							sudPrint("Chunk ID: " + chunkHeader.ChunkId + "  magic OK? " + chunkHeader.checkId() + " "
-									+ sudFileExpander.getChunkIDString(chunkHeader.ChunkId) + "data len: "
+									+ sudFileExpander.getChunkFileType(chunkHeader.ChunkId) + "data len: "
 									+ data.length);
 
 							// remember that there are no X3 chunks as such - the wav chunk has a source ID
@@ -695,6 +706,23 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.sudFileExpander.closeFileExpander();
 		sudFileExpander.getSudInputStream().close();
 	}
+	
+	/**
+	 * Add a file listener to the sud file expander. 
+	 * @param sudFileListener - the file listener to add. 
+	 */
+	public void addSudFileListener(SudFileListener sudFileListener) {
+		sudFileExpander.addSudFileListener(sudFileListener);
+	}
+	
+	/**
+	 * Remove a sud file listener. 
+	 * @param sudFileListener - the sudFileListener to remove.
+	 * @return true if the SudFileListener was removed. 
+	 */
+	public boolean removeSudFileListener(SudFileListener sudFileListener) {
+		return sudFileExpander.removeSudFileListener(sudFileListener);
+	}
 
 	/**
 	 * Marks the current position in this audio input stream.
@@ -790,6 +818,31 @@ public class SudAudioInputStream extends AudioInputStream {
 	public SudParams getSudParams() {
 		return this.sudFileExpander.getSudParams();
 	}
+	
+	/**
+	 * Get the string name for the chunk ID. Note that a .sud file can have
+	 * different numbers and versions of data handlers and so the chunkID is not
+	 * unique between files. The chunk string is unique.
+	 * <p>
+	 * Note: this function call only be called after processChunk has been called.
+	 * 
+	 * @param chunkID
+	 * @return the string name of the handler associated with the chunkID or null if
+	 *         there is no handler associated with the chunkID. 
+	 */
+	public String getChunkIDString(int chunkID) {
+		return sudFileExpander.getChunkFileType(chunkID);
+	}
+
+	/**
+	 * Get the data handler instance for a chunkID 
+	 * @param chunkID - the ID of the chunk. 
+	 * @return the data handler instance to process the chunk. 
+	 */
+	public  IDSudar getChunkDataHandler(int chunkID) {
+		return sudFileExpander.getChunkDataHandler(chunkID); 
+	}
+
 
 	/**
 	 * Test decompression on a file using a SudAudioInputStream. 

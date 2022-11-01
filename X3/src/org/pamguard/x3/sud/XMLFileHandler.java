@@ -16,7 +16,9 @@ import org.xml.sax.InputSource;
 
 /**
  * 	Handles XML chunks in the .sud file. The XML chunks define the ID of the other chunks i.e. what the chunk IDs mean and 
- *  how to parse them. The XML
+ *  how to parse them. 
+ *  
+ *  
  * @author Jamie Macaulay
  *
  */
@@ -64,8 +66,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		System.out.println(xml);
-		
+		//System.out.println(xml);
 		
 		//save to the log file. 
 		if (this.saveMeta) {

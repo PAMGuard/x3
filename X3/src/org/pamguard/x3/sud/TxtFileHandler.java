@@ -2,7 +2,6 @@ package org.pamguard.x3.sud;
 
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
