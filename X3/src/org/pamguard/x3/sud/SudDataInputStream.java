@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
  * Copied from https://www.peterfranza.com/2008/09/26/little-endian-input-stream/
  * this is basically the same as LittleEndianDataInputStream in TritechFiles, but I renamed
  * it to keep it clearly different form the google one Jamie has been using. 
- * @author dg50
+ * @author Doug Gillespie
  *
  */
 public class SudDataInputStream extends InputStream implements DataInput {
@@ -150,7 +150,7 @@ public class SudDataInputStream extends InputStream implements DataInput {
 		 public final void close() throws IOException {
 			 d.close();
 		 }
-	 
+		 
 		 private DataInputStream d; // to get at high level readFully methods of
 		 // DataInputStream
 		 private InputStream in; // to get at the low-level read methods of

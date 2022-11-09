@@ -1,7 +1,6 @@
 package org.pamguard.x3.sud;
 
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,48 +19,62 @@ import org.pamguard.x3.utils.XMLUtils;
  *
  */
 public class CsvFileHandler implements ISudarDataHandler {
-	
+
 	/**
 	 * Chunk IDs. 
 	 */
 	private int[] chunkIds;  
-	
+
 	FileWriter sw;
-	
+
 	String fileSuffix = "csv";
-	
+
 	int id;
-	
+
 	String header;
 
 	private File sudFile;
 
 	private String fileName;
 
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype;
 
-	public CsvFileHandler(String filePath) {
-		this.sudFile = new File(filePath);
-		this.fileName = FilenameUtils.removeExtension(sudFile.getName());
+	/**
+	 * True to save the csv. 
+	 */
+	private boolean saveMeta; 
+
+
+	public CsvFileHandler(SudParams filePath, String ftype) {
+		this.sudFile = new File(filePath.getSudFilePath());
+		this.fileName =filePath.getOutFilePath();
+		this.ftype=ftype; 
+		this.saveMeta = filePath.saveMeta;
 	}
 
 	@Override
 	public void processChunk(Chunk sudChunk) throws IOException {
-		
-		System.out.println("Read CSV:");
-		if(sw == null) {
-			sw = new FileWriter(fileName + fileSuffix + ".csv", false);
-			sw.write(header);
-			sw.write("\n");
 
+		if (saveMeta) {
+			//System.out.println("Read CSV: " + (fileName + fileSuffix + ".csv"));
+			if(sw == null) {
+				sw = new FileWriter(fileName + fileSuffix + ".csv", false);
+				sw.write(header);
+				sw.write("\n");
+
+			}
+			//string s = Encoding.Unicode.GetString(buf);
+
+			String s = new String(sudChunk.buffer, StandardCharsets.UTF_8);
+			sw.write( s );
+			sw.flush();
 		}
-		//string s = Encoding.Unicode.GetString(buf);
-		
-		String s = new String(sudChunk.buffer, StandardCharsets.UTF_8);
-		sw.write( s );
-		sw.flush();
-		
+
 	}
-	
+
 	public String getFileType() {
 		return fileSuffix;
 	}
@@ -80,15 +93,15 @@ public class CsvFileHandler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(DataInput inputStream, String innerXml, int id) {
+	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.chunkIds = new int[]{id};
-		
+
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
-		
+
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"SUFFIX", "HEADER"},  nodeList);
-		
+
 		header = nodeContent.get("SUFFIX");
 		fileSuffix = nodeContent.get("HEADER");
 
@@ -98,5 +111,11 @@ public class CsvFileHandler implements ISudarDataHandler {
 	public int[] getChunkID() {
 		return chunkIds;
 	}
+
+	@Override
+	public String getHandlerType() {
+		return ftype;
+	}
+
 
 }

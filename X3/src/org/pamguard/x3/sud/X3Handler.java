@@ -1,7 +1,6 @@
 
 package org.pamguard.x3.sud;
 
-import java.io.DataInput;
 import java.util.HashMap;
 
 import org.pamguard.x3.utils.XMLUtils;
@@ -15,8 +14,8 @@ import org.w3c.dom.NodeList;
 
 
 /**
- * 
  * Opens an X3 blocks in SUD files. 
+ * 
  * @author Jamie Macaulay
  *
  */
@@ -43,15 +42,28 @@ public class X3Handler implements ISudarDataHandler {
 
 	private Integer nChan;
 
-	private X3BitPacker bs; 
+	private X3BitPacker bs;
 
-	public X3Handler(String filePath) {
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype; 
+
+
+	public X3Handler(SudParams filePath, String ftype) {
 		x3FrameDecode = new X3FrameDecode(); 
+		this.ftype = ftype; 
 	}
 
 	int readCount = 0;
 	@Override
+	/**
+	 * Process a chunk of X3 data. The uncompressed data is saved to the buffer of sudChunk. 
+	 * @param - the sudChunk containing the X3 compressed data. 
+	 */
 	public void processChunk(Chunk sudChunk) {
+		
+	
 		
 		byte[] buf = sudChunk.buffer;
 		ChunkHeader ch = sudChunk.chunkHeader;
@@ -60,7 +72,9 @@ public class X3Handler implements ISudarDataHandler {
 
 		
 		//System.out.println("Process X3 chunk START: " + buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
+	
 		
+		//set the relevent data for the X3 header
 		x3Head.setnSamples((short) ch.SampleCount);
 		x3Head.setCrcData((short) ch.DataCrc);
 		x3Head.setId((byte) ch.ChunkId);
@@ -90,8 +104,6 @@ public class X3Handler implements ISudarDataHandler {
 		}
 		
 		try {
-
-
 		readCount = 0;
 		int samplesToGo = (ch.SampleCount-1);
 		while(samplesToGo > 0) {
@@ -141,7 +153,7 @@ public class X3Handler implements ISudarDataHandler {
 
 	private BlockDecodeOut BlockDecode(X3BitPacker bs2, short[] buf, short last, int count) throws Exception {
 		
-		int iChan = 0;
+//		int iChan = 0;
 				
 //		this.x3Head.setnSamples((short) 16);
 //		
@@ -187,8 +199,8 @@ public class X3Handler implements ISudarDataHandler {
 		
 		//System.out.println(count + ": Unpack Rice: " + count);
 		
-		int iBit;
-		int p = nChan;
+//		int iBit;
+//		int p = nChan;
 		if(code > 0) {
 			//unpackr(bufIn, buf, count, code-1);
 //			iBit = X3FrameDecode.unpackRice(bs2, code, buf, p+iChan, count, iChan);
@@ -293,7 +305,10 @@ public class X3Handler implements ISudarDataHandler {
 	}
 
 	@Override
-	public void init(DataInput inputStream, String innerXml, int id) {
+	/**
+	 * Unpack the X3 XML to get some basic info such as the block length and the number of channels. 
+	 */
+	public void init(LogFileStream inputStream, String innerXml, int id) {
 		
 		this.chunkIds = new int[]{id};
 		
@@ -306,6 +321,8 @@ public class X3Handler implements ISudarDataHandler {
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"BLKLEN", "NCHS"},  nodeList);
 
 		blockLength = Integer.valueOf(nodeContent.get("BLKLEN"));
+		
+		System.out.println("Block Length: " + blockLength);
 		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
 //		if(nodeList!=null && nodeList.getLength() > 0) {
@@ -358,6 +375,11 @@ public class X3Handler implements ISudarDataHandler {
 		int n; 
 		 
 		 short [] array;
+	}
+
+	@Override
+	public String getHandlerType() {
+		return ftype;
 	}
 
 

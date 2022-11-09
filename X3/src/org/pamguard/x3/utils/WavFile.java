@@ -12,6 +12,7 @@ package org.pamguard.x3.utils;
 
 import java.io.*;
 
+
 public class WavFile
 {
 	private enum IOState {READING, WRITING, CLOSED};
@@ -752,4 +753,7 @@ public class WavFile
 			e.printStackTrace();
 		}
 	}
+	
+
+
 }

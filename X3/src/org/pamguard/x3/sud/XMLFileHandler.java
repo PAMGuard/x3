@@ -1,6 +1,5 @@
 package org.pamguard.x3.sud;
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -14,12 +13,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.google.common.io.LittleEndianDataInputStream;
-
 
 /**
  * 	Handles XML chunks in the .sud file. The XML chunks define the ID of the other chunks i.e. what the chunk IDs mean and 
- *  how to parse them. The XML
+ *  how to parse them. 
+ *  
+ *  
  * @author Jamie Macaulay
  *
  */
@@ -35,23 +34,30 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	/**
 	 * The buffer input stream.
 	 */
-	private DataInput bufInput;
-
-	private HashMap<Integer, IDSudar>  dataHandlers;
+	private LogFileStream logStream;
 
 	/**
-	 * The folder to save to. If null then saves to the same directory as the 
+	 * The data handlers. 
 	 */
-	private File outfolder;
+	private HashMap<Integer, IDSudar>  dataHandlers;
 	
+	/**
+	 * A string enum to define the handler
+	 */
+	private String ftype = "xml";
+	
+	/**
+	 * True to save the xml file whenever a sud is read. 
+	 */
+	private boolean saveMeta = true; 
+	
+	private SudParams sudarParams; 
 
-	public XMLFileHandler(File sourceFile, File outFolder, String outName, HashMap<Integer, IDSudar> dataHandlers) {
-		this.fileName = sourceFile;
+	public XMLFileHandler(SudParams sudParams, HashMap<Integer, IDSudar> dataHandlers) {
 		this.dataHandlers = dataHandlers;
-		this.outfolder = outFolder;
-		if (outfolder==null) {
-			this.outfolder = new File(sourceFile.getParent());
-		}
+		this.saveMeta=sudParams.saveMeta;
+		this.sudarParams=sudParams;
+
 	}
 
 	@Override
@@ -60,7 +66,12 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		System.out.println(xml);
+		//System.out.println(xml);
+		
+		//save to the log file. 
+		if (this.saveMeta) {
+			logStream.print(xml);
+		}
 
 		//very important t o use trim or else throws an error
 		Document doc = convertStringToXMLDocument(xml.trim());
@@ -68,20 +79,13 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //		System.out.println(doc.getDocumentElement().toString());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getNodeName());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getAttributes().item(0));
-
-
 		NodeList nodeList = doc.getElementsByTagName("CFG"); 
 		
-		System.out.println("node len XML: " + nodeList.getLength()); 
-
-		
+		//System.out.println("node len XML: " + nodeList.getLength()); 		
 		if(nodeList!=null && nodeList.getLength() > 0) {
 			for (int i=0; i<nodeList.getLength(); i++) {
 				
 				//System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
-
-				
-
 //				System.out.println("CODEC: " + nodeList.item(i).getAttributes().getNamedItem("CODEC").getNodeValue()); 
 //				System.out.println("SUFFIX: " + nodeList.item(i).getAttributes().getNamedItem("SUFFIX").getNodeValue()); 
 				
@@ -92,8 +96,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 				
 				if(ftype != null && id != null && Integer.valueOf(id.getNodeValue()) != 0) {
 					try {
-						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), fileName.getAbsolutePath());
-						handler.init(bufInput, xml, i);
+						ISudarDataHandler handler = ISudarDataHandler.createHandler(ftype.getNodeValue(), sudarParams);
+						handler.init(logStream, xml, i);
 						
 						IDSudar idSudar = new IDSudar(); 
 						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
@@ -158,7 +162,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	/**
 	 * Parse an xml string. 
 	 * @param xmlString - the xml string to parse
-	 * @return 
+	 * @return the xml document. 
 	 */
 	public static Document convertStringToXMLDocument(String xmlString) {
 		//Parser that produces DOM object trees from XML content
@@ -185,8 +189,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 
 	@Override
-	public void init(DataInput bufinput2, String innerXml, int id) {
-		this.bufInput = bufinput2;
+	public void init(LogFileStream bufinput2, String innerXml, int id) {
+		this.logStream = bufinput2;
+		
 		this.chunkIds = new int[]{id};
 	}
 
@@ -194,6 +199,14 @@ public class XMLFileHandler implements ISudarDataHandler  {
 	public int[] getChunkID() {
 		return chunkIds;
 	}
+
+	@Override
+	public String getHandlerType() {
+		return ftype;
+	}
+
+
+
 
 
 }
