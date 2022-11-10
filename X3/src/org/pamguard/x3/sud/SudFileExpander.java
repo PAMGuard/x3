@@ -19,6 +19,10 @@ import java.util.Iterator;
  */
 public class SudFileExpander {
 
+	/**
+	 * The chunk ID for xml files. 
+	 */
+	private static final int XML_CHUNK_ID = 0;
 
 	/**
 	 * Progress listeners. 
@@ -77,7 +81,7 @@ public class SudFileExpander {
 
 		logFile = new LogFileStream(logFileName);
 		
-		xmlHandler.init(logFile, "", 0);
+		xmlHandler.init(logFile, "", XML_CHUNK_ID);
 
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
@@ -115,11 +119,12 @@ public class SudFileExpander {
 					//				System.out.println(chunkHeader.toHeaderString());
 					count++;
 
-					//System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
 //					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
+
 
 					//process the chunk
 					processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
@@ -130,6 +135,7 @@ public class SudFileExpander {
 
 			}
 			catch (EOFException eof) {
+				System.out.println("End of .sud file EOF");
 				break;
 			}
 		}
@@ -164,6 +170,8 @@ public class SudFileExpander {
 		//does the data handler contain the chunkID?
 		//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
 		IDSudar aHandler = dataHandlers.get(chunkId); 
+		
+		//System.out.println("Process data handler: "  + aHandler); 
 
 		if (aHandler==null) return; 
 
@@ -190,16 +198,35 @@ public class SudFileExpander {
 	}
 	
 	/**
-	 * Check whether a chunk ID is an uncompressed chunk of wav data from continuous
-	 * recordings (could also be uncompressed wav data from click detections)
+	 * Check whether a chunk ID is an uncompressed chunk of wav data from CONTINUOUS
+	 * recordings (there is also uncompressed wav data from click detections but this will return false)
 	 * 
 	 * @return true if the chunkID contains uncompressed wav data from continuous or
 	 *         duty samples recordings.
 	 */
 	public boolean isChunkIDWav(int chunkID) {
+		return isChunkIDWavint(chunkID,  "wav"); 
+	}
+	
+	/**
+	 * Check whether a chunk ID is an uncompressed chunk of click data.
+	 * 
+	 * @return true if the chunkID contains uncompressed wav data from click detections. 
+	 */
+	public boolean isChunkIDDwv(int chunkID) {
+		return isChunkIDWavint(chunkID,  "dwv");
+	}
+	
+	/**
+	 * Check whether a chunk is uncompressed wav data. 
+	 * @param chunkID - the chunk to check.
+	 * @param fileSuffix - the type of wav data ("wav" for continuous recordings, "dwv" for click detection waveforms)
+	 * @return true if the chunkID is wav data of the right type. 
+	 */
+	private boolean isChunkIDWavint(int chunkID, String fileSuffix){
 		if (getChunkFileType(chunkID).equals("wav")) {
 			WavFileHandler wavHandler = (WavFileHandler) getChunkDataHandler(chunkID).dataHandler;
-			if (wavHandler.getFileSuffix().equals("wav"))
+			if (wavHandler.getFileSuffix().equals(fileSuffix))
 				return true;
 			else
 				return false; // probably dwv file for click detections.

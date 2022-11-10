@@ -66,7 +66,13 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 		String xml = new String(subChunk.buffer, "UTF-8");
 		
-		//System.out.println(xml);
+		//System.out.println(subChunk.chunkHeader.toHeaderString() + xml.length());
+		
+		
+//		for (int i=0; i<xml.length(); i++) {
+//			System.out.println(i + "  " +xml.charAt(i)); 
+//		}
+		//System.out.println(xml.trim());
 		
 		//save to the log file. 
 		if (this.saveMeta) {
@@ -153,8 +159,10 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		for (int i = 0; i < data.length; i += 2)
 		{
 			byte b = data[i];
-			data[i] = data[i + 1];
-			data[i + 1] = b;
+			if (i+1<data.length) {
+				data[i] = data[i + 1];
+				data[i + 1] = b;
+			}
 		}
 	}
 

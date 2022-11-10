@@ -15,7 +15,7 @@ public class SudFileMap implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	/**
 	 * A list of all chunk headers in the file.
@@ -47,6 +47,31 @@ public class SudFileMap implements Serializable {
 	 * The number of channels
 	 */
 	public int nChannels = 1;
+	
+	/**
+	 * The sample rate of the click detector. NaN if there is no click detector
+	 */
+	public float clickDetSampleRate = Float.NaN; 
+	
+	/**
+	 * The start time of the file in millisecond time. 
+	 */
+	public long headerTimeMillis = 0; 
+	
+	/**
+	 * The ID of the hardware used to record the SudFile. 
+	 */
+	public String hardwareID = null;
+	
+	/**
+	 * The temperature of the device when the file was created. 
+	 */
+	public double temperature = 0; 
+	
+	/**
+	 * All metadata associated with the sud file. 
+	 */
+	public String xmlMetaData = null; 
 
 	/**
 	 * Get the number of channels. 
@@ -57,7 +82,7 @@ public class SudFileMap implements Serializable {
 	}
 
 	/**
-	 * Gte the number of bits per sample. 
+	 * Get the number of bits per sample. 
 	 * @return the number of bits per sample. 
 	 */
 	public int getBitsPerSample() {

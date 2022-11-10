@@ -322,7 +322,7 @@ public class X3Handler implements ISudarDataHandler {
 
 		blockLength = Integer.valueOf(nodeContent.get("BLKLEN"));
 		
-		System.out.println("Block Length: " + blockLength);
+		//System.out.println("Block Length: " + blockLength);
 		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
 //		if(nodeList!=null && nodeList.getLength() > 0) {
