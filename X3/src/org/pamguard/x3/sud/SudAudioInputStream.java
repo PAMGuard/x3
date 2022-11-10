@@ -177,6 +177,11 @@ public class SudAudioInputStream extends AudioInputStream {
 				chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
 				chunkHeaderMap.add(chunkHeader); 
 
+				long t = chunkHeader.getMillisTime();
+				if (t != 0 && sudMap.firstChunkTime == 0) {
+					sudMap.firstChunkTime = t;
+				}
+
 				if (chunkHeader.checkId()) {
 					
 					byte[] data = new byte[chunkHeader.DataLength];
@@ -185,6 +190,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					// System.out.println("--------------");
 					// System.out.println(chunkHeader.toHeaderString());
 					count++;
+					
 
 					// only process chunks if they are XML header
 					if (chunkHeader.ChunkId == 0) {
@@ -262,7 +268,7 @@ public class SudAudioInputStream extends AudioInputStream {
 				
 		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
 		
-		sudMap.headerTimeMillis = sudHeader.DeviceTime*1000;
+		sudMap.headerTimeMillis = (long) sudHeader.DeviceTime*1000L;
 		sudMap.chunkHeaderMap = chunkHeaderMap;
 		sudMap.totalSamples = totalSamples;
 		sudMap.sampleRate = wavFileHandler.getSampleRate();
@@ -539,7 +545,9 @@ public class SudAudioInputStream extends AudioInputStream {
 			} catch (EOFException eof) {
 				// Hmmmmm - this is not the way to do things but there does not seems to be a
 				// number of chunks in the header?
-				 System.out.println("Close the file: ");
+				if (getSudParams().isVerbose()) {
+					System.out.println("Close the file: ");
+				}
 				sudFileExpander.closeFileExpander();
 				eof.printStackTrace();
 				return;

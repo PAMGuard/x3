@@ -118,8 +118,9 @@ public class SudFileExpander {
 					//				System.out.println("--------------");
 					//				System.out.println(chunkHeader.toHeaderString());
 					count++;
-
-					System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					if (sudParams.isVerbose()) {
+						System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					}
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
