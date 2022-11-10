@@ -1,11 +1,9 @@
+
 package org.pamguard.x3.sud;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,16 +57,15 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	private int bytesRead = 0;
 
-	/**
-	 * The total samples in the file.
-	 */
+//	/**
+//	 * The total samples in the file.
+//	 */
 	private long totalBytes = 0;
 
 	/**
-	 * A list of all the header chunks in the sud file. 
+	 * The sud file map. 
 	 */
-	private ArrayList<ChunkHeader> chunkHeaderMap;
-	
+	private SudFileMap sudMap;
 
 	
 	/**
@@ -78,21 +75,19 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * @param length - the total number of uncompressed bytes in the sud file. 
 	 * @param chunkHeaderMap - a map of all the chunk headers - this can increase speed by x 2 but can also be null in which case the sud chunk headers are read from the file. 
 	 */
-	public SudAudioInputStream(SudFileExpander sudFileExpander, AudioFormat format, long length, ArrayList<ChunkHeader> chunkHeaderMap) {
-		super(sudFileExpander.getSudInputStream(), format, length);
+	public SudAudioInputStream(SudFileExpander sudFileExpander, AudioFormat format, SudFileMap sudMap) {
+		super(sudFileExpander.getSudInputStream(), format, sudMap.totalSamples);
 		this.sudFileExpander = sudFileExpander;
-		this.totalBytes = length;
+		this.sudMap = sudMap;
+		this.totalBytes = sudMap.totalSamples * (sudMap.getBitsPerSample() / 8); 
 		sudFileExpander.addSudFileListener((chunkId, chunk) -> {
 			// here is the wav data
 			if (sudFileExpander.getChunkFileType(chunkId).equals("wav")) {
 				sudPrint("New wav data: No. bytes: " + chunk.buffer.length + " Total samples read: " + bytesRead
-						+ " of " + totalBytes);
+						+ " of " + sudMap.totalSamples);
 				this.audioBuffer = chunk.buffer;
 			}
 		});
-		
-		this.chunkHeaderMap = chunkHeaderMap; 
-
 	}
 
 	/**
@@ -158,8 +153,9 @@ public class SudAudioInputStream extends AudioInputStream {
 		// ArrayList<Integer> totalWavSamplesChunk = new ArrayList<Integer>();
 
 		ChunkHeader lastWavChunk = null;
-		WavFileHandler wavFileHandler = null;
-		
+		WavFileHandler wavFileHandler = null; //continuous recordsings. 
+		WavFileHandler dwvFileHandler = null; //click detections
+
 		
 		long totalSamples = 0;
 		// int mark = 0;
@@ -172,6 +168,8 @@ public class SudAudioInputStream extends AudioInputStream {
 		//long time1 = System.currentTimeMillis();
 		
 		ArrayList<ChunkHeader> chunkHeaderMap = new ArrayList<ChunkHeader>(); 
+		
+		SudFileMap sudMap = new SudFileMap(); 
 
 		int count = 0;
 		while (true) {
@@ -180,6 +178,7 @@ public class SudAudioInputStream extends AudioInputStream {
 				chunkHeaderMap.add(chunkHeader); 
 
 				if (chunkHeader.checkId()) {
+					
 					byte[] data = new byte[chunkHeader.DataLength];
 
 					sudFileExpander.getSudInputStream().readFully(data);
@@ -187,10 +186,17 @@ public class SudAudioInputStream extends AudioInputStream {
 					// System.out.println(chunkHeader.toHeaderString());
 					count++;
 
-					// only process chunks if they are XML heades
+					// only process chunks if they are XML header
 					if (chunkHeader.ChunkId == 0) {
 						sudFileExpander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
-
+						
+						if (sudMap.xmlMetaData==null) {
+							sudMap.xmlMetaData = new String();
+						}
+						
+						//XMLFileHandler.swapEndian(data); // the data endian has already been swapped by the processChunk function
+						sudMap.xmlMetaData += new String(data, "UTF-8");
+		
 						// mark the last point at which a ChunkID of 0 is found. Means we don't need to
 						// iterate through
 						// this part of the stream again.
@@ -199,7 +205,7 @@ public class SudAudioInputStream extends AudioInputStream {
 
 					// System.out.println(sudFileExpander.getChunkIDString(chunkHeader.ChunkId));
 
-					// count the number of samples.
+					// count the number of samples from wav chunks
 					if (sudFileExpander.isChunkIDWav(chunkHeader.ChunkId)) {
 
 						sudPrint("HeaderCrc: " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
@@ -216,18 +222,25 @@ public class SudAudioInputStream extends AudioInputStream {
 							totalSamples = totalSamples + nWavSamples(chunkHeader, lastWavChunk,
 									wavFileHandler.getSampleRate(), sudFileExpander.getSudParams().zeroPad);
 
-						} else {
+						} 
+						else {
 							// this is the first time a wav chunk has been encountered. Get the sample rate.
 							// Do we have wav file data handlers? If not then this is not an audio stream
 							// and throw an exception.
 							ArrayList<IDSudar> dataHandlers = new ArrayList<IDSudar>(
 									sudFileExpander.getDataHandlers().values());
 							// find the wav file data handler
-							for (int i = 0; i < dataHandlers.size(); i++) {
-								if (dataHandlers.get(i).dataHandler instanceof WavFileHandler) {
-									wavFileHandler = (WavFileHandler) dataHandlers.get(i).dataHandler;
-								}
-							}
+							wavFileHandler = (WavFileHandler) sudFileExpander.getChunkDataHandler(chunkHeader.ChunkId).dataHandler; 
+							
+//							for (int i = 0; i < dataHandlers.size(); i++) {
+//								if (dataHandlers.get(i).dataHandler instanceof WavFileHandler && ((WavFileHandler) dataHandlers.get(i).dataHandler).getFileSuffix().equals("wav")) {
+//									//must be careful to make sure that we do not grab the dwv file from the click detector. The audio stream is for continuous wav files only
+//									//- external data such as clicks is accessed through the SudFileListeners. 
+//									//System.out.println("HELLO!!!: " + ((WavFileHandler) dataHandlers.get(i).dataHandler).getFileSuffix() + " sampleRate: " +((WavFileHandler) dataHandlers.get(i).dataHandler).getSampleRate()) ;
+//									wavFileHandler = (WavFileHandler) dataHandlers.get(i).dataHandler;
+//									break;
+//								}
+//							}
 
 							if (wavFileHandler == null) {
 								throw new Exception("The .sud file does not contain any audio data");
@@ -236,22 +249,29 @@ public class SudAudioInputStream extends AudioInputStream {
 						}
 						lastWavChunk = chunkHeader;
 					}
+					
+					//get some metadata from the click file handler. 
+					if (sudFileExpander.isChunkIDDwv(chunkHeader.ChunkId) && dwvFileHandler==null) {
+						dwvFileHandler = (WavFileHandler) sudFileExpander.getChunkDataHandler(chunkHeader.ChunkId).dataHandler; 
+					}
 				}
 			} catch (EOFException eof) {
 				break;
 			}
 		}
-		
-		SudFileMap sudMap = new SudFileMap(); 
-		
+				
 		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
 		
+		sudMap.headerTimeMillis = sudHeader.DeviceTime*1000;
 		sudMap.chunkHeaderMap = chunkHeaderMap;
 		sudMap.totalSamples = totalSamples;
 		sudMap.sampleRate = wavFileHandler.getSampleRate();
 		sudMap.zeroPad = sudFileExpander.getSudParams().zeroPad; 
 		sudMap.bitsPerSample = wavFileHandler.getBitsPerSample(); 
 		sudMap.nChannels = wavFileHandler.getNChannels();
+		if (dwvFileHandler!=null) {
+			sudMap.clickDetSampleRate = dwvFileHandler.getSampleRate(); 
+		}
 
 		return sudMap; 
 	}
@@ -308,7 +328,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			else sudFileMap = loadedFileMap; 
 		}
 		
-		
+		//System.out.println("No. chunks: " + sudFileMap.chunkHeaderMap.size());
 		//if the file map not exist then make it. 
 		if (sudFileMap==null) {
 			sudFileMap = mapSudFile(sudFileExpander, verbose); 
@@ -318,7 +338,6 @@ public class SudAudioInputStream extends AudioInputStream {
 		//long time2 = System.currentTimeMillis();
 		
 //		System.out.println("Time to run through all headers: " + (time2 - time1));
-		
 		
 		
 		int blockAlign = sudFileMap.getNChannels() * (sudFileMap.getBitsPerSample() / 8);
@@ -346,8 +365,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		// //the number of samples in total.
 		// long nFrames = wavHeader.getDataSize() / wavHeader.getBlockAlign();
 
-		SudAudioInputStream sudAudioInputStream = new SudAudioInputStream(sudFileExpander, audioFormat,
-				sudFileMap.totalSamples * (sudFileMap.getBitsPerSample() / 8), sudFileMap.chunkHeaderMap);
+		SudAudioInputStream sudAudioInputStream = new SudAudioInputStream(sudFileExpander, audioFormat, sudFileMap);
 
 		sudAudioInputStream.setVerbose(verbose);
 
@@ -361,7 +379,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileOutputStream fileOutputStream
 	      = new FileOutputStream(file);
 	    ObjectOutputStream objectOutputStream 
-	      = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
+	      = new ObjectOutputStream(fileOutputStream);
 	    objectOutputStream.writeObject(sudMap);
 	    objectOutputStream.flush();
 	    objectOutputStream.close();
@@ -372,7 +390,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileInputStream fileInputStream
 	      = new FileInputStream(file);
 	    ObjectInputStream objectInputStream
-	      = new ObjectInputStream(new BufferedInputStream(fileInputStream));
+	      = new ObjectInputStream(fileInputStream);
 	    SudFileMap p2 = (SudFileMap) objectInputStream.readObject();
 	    objectInputStream.close(); 
 	    return  p2; 
@@ -443,11 +461,11 @@ public class SudAudioInputStream extends AudioInputStream {
 			try {
 				// System.out.println("Deserialise: " +
 				// sudFileExpander.getSudInputStream().available());
-				if (chunkHeaderMap == null) {					
+				if (sudMap.chunkHeaderMap == null) {					
 					chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
 				}
 				else {
-					chunkHeader = chunkHeaderMap.get(count); 
+					chunkHeader = sudMap.chunkHeaderMap.get(count); 
 					sudFileExpander.getSudInputStream().skip(ChunkHeader.NUM_BYTES); 
 				}
 				
@@ -844,6 +862,14 @@ public class SudAudioInputStream extends AudioInputStream {
 	public  IDSudar getChunkDataHandler(int chunkID) {
 		return sudFileExpander.getChunkDataHandler(chunkID); 
 	}
+	
+	/**
+	 * Get the sud file map. This contains metadata about the file. 
+	 * @return the sud file map. 
+	 */
+	public SudFileMap getSudMap() {
+		return this.sudMap;
+	}
 
 
 	/**
@@ -854,7 +880,8 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		long time0 = System.currentTimeMillis();
 		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
-		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
+		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
+		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
 		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
 		SudAudioInputStream sudAudioInputStream = null;
 		
@@ -866,14 +893,15 @@ public class SudAudioInputStream extends AudioInputStream {
 		
 		try {
 			
+			
+			
 			sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
 			
 			long time1 = System.currentTimeMillis();
 			
-			System.out.println("Time to create file map: " + (time1 - time0));
+			System.out.println("Time to create file map: " + (time1 - time0) + " sample rate: " + sudAudioInputStream.getFormat().getSampleRate() + " " + sudAudioInputStream.getSudMap().clickDetSampleRate);
 
 			System.out.println("sudAudioInputStream.available() 1: " + sudAudioInputStream.available());
-
 
 			sudAudioInputStream.skip(500000 * 0);
 			
@@ -905,6 +933,11 @@ public class SudAudioInputStream extends AudioInputStream {
 		long time3 = System.currentTimeMillis();
 
 		System.out.println("Total processing time: " + (time3 - time0));
+		
+		System.out.println(sudAudioInputStream.getSudMap().xmlMetaData);
+
 	}
+
+
 
 }

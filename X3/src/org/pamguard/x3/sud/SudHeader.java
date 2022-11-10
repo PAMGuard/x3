@@ -48,8 +48,7 @@ public class SudHeader {
 			header.EndBlock = dataInputStream.readUnsignedShort();
 			header.NoOfBlocks = dataInputStream.readInt();
 			header.Crc = dataInputStream.readUnsignedShort();
-			
-
+		
 			
 			return header;
 
