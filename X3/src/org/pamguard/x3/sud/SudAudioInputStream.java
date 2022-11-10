@@ -549,7 +549,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					System.out.println("Close the file: ");
 				}
 				sudFileExpander.closeFileExpander();
-				eof.printStackTrace();
+//				eof.printStackTrace();
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -593,13 +593,14 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	@Override
 	public int read() throws IOException {
-		if (audioBuffer == null)
-			throw new IOException("The audio buffer is null");
+		if (audioBuffer == null) {
+			throw new EOFException("The audio buffer is null");
+		}
 		if ((readIndex) >= audioBuffer.length) {
 			nextChunk(0);
 		}
 		if (audioBuffer == null)
-			throw new IOException("The audio buffer is null");
+			throw new EOFException("The audio buffer is null");
 		bytesRead++;
 		return audioBuffer[readIndex++];
 	}
@@ -650,9 +651,14 @@ public class SudAudioInputStream extends AudioInputStream {
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
 		int count = 0;
-		for (int i = off; i < (len + off); i++) {
-			b[i] = (byte) this.read();
-			count++;
+		try {
+			for (int i = off; i < (len + off); i++) {
+				b[i] = (byte) this.read();
+				count++;
+			}
+		}
+		catch (EOFException e) {
+			// normal behaviour
 		}
 		return count;
 	}

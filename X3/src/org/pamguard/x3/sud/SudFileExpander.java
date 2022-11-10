@@ -79,9 +79,12 @@ public class SudFileExpander {
 		//TODO - add out folder. 
 		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
-		logFile = new LogFileStream(logFileName);
-		
+		if (sudParams.saveMeta) {
+			logFile = new LogFileStream(logFileName);
+		}
+
 		xmlHandler.init(logFile, "", XML_CHUNK_ID);
+		
 
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
@@ -156,7 +159,9 @@ public class SudFileExpander {
 			dataHandlers.get(keySet.next()).dataHandler.close();
 		}
 		
-		logFile.close();
+		if (logFile != null) {
+			logFile.close();
+		}
 	}
 
 
