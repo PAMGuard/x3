@@ -4,8 +4,6 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.io.Serializable;
 
-import com.google.common.io.LittleEndianDataInputStream;
-
 /**
  * The chunk header for each block within the sud files. 
  * <p>
@@ -52,6 +50,14 @@ public class ChunkHeader implements Serializable {
 		header.HeaderCrc = bufinput.readUnsignedShort();
 
 		return header;
+	}
+	
+	/**
+	 * Get the time in standard Java milliseconds. 
+	 * @return
+	 */
+	long getMillisTime() {
+		return (long) TimeS * 1000 + TimeOffsetUs / 1000;
 	}
 	
 	/**

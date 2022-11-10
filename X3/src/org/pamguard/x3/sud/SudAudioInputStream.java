@@ -1,5 +1,7 @@
 package org.pamguard.x3.sud;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -359,7 +361,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileOutputStream fileOutputStream
 	      = new FileOutputStream(file);
 	    ObjectOutputStream objectOutputStream 
-	      = new ObjectOutputStream(fileOutputStream);
+	      = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
 	    objectOutputStream.writeObject(sudMap);
 	    objectOutputStream.flush();
 	    objectOutputStream.close();
@@ -370,7 +372,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileInputStream fileInputStream
 	      = new FileInputStream(file);
 	    ObjectInputStream objectInputStream
-	      = new ObjectInputStream(fileInputStream);
+	      = new ObjectInputStream(new BufferedInputStream(fileInputStream));
 	    SudFileMap p2 = (SudFileMap) objectInputStream.readObject();
 	    objectInputStream.close(); 
 	    return  p2; 
