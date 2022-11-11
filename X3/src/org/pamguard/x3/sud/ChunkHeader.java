@@ -61,6 +61,15 @@ public class ChunkHeader implements Serializable {
 	}
 	
 	/**
+	 * Get the time in standard  Microseconds. This is on the same reference as Java milliseconds
+	 * but with higher resolution.  
+	 * @return
+	 */
+	public long getMicrosecondTime() {
+		return (long) TimeS * 1000000 + TimeOffsetUs;
+	}
+	
+	/**
 	 * Check that the chunk is valid - this simply checks a "magic" number
 	 * in the header that should be the correct number.  
 	 * @return true if the chunk header is valid. 

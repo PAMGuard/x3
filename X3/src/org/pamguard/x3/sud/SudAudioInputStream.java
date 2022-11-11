@@ -1,12 +1,15 @@
 
 package org.pamguard.x3.sud;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -177,10 +180,7 @@ public class SudAudioInputStream extends AudioInputStream {
 				chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
 				chunkHeaderMap.add(chunkHeader); 
 
-				long t = chunkHeader.getMillisTime();
-				if (t != 0 && sudMap.firstChunkTime == 0) {
-					sudMap.firstChunkTime = t;
-				}
+				long t = chunkHeader.getMicrosecondTime();
 
 				if (chunkHeader.checkId()) {
 					
@@ -213,6 +213,10 @@ public class SudAudioInputStream extends AudioInputStream {
 
 					// count the number of samples from wav chunks
 					if (sudFileExpander.isChunkIDWav(chunkHeader.ChunkId)) {
+
+						if (t != 0 && sudMap.firstChunkTimeMicrosecs == 0) {
+							sudMap.firstChunkTimeMicrosecs = t;
+						}
 
 						sudPrint("HeaderCrc: " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
 
@@ -385,7 +389,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileOutputStream fileOutputStream
 	      = new FileOutputStream(file);
 	    ObjectOutputStream objectOutputStream 
-	      = new ObjectOutputStream(fileOutputStream);
+	      = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
 	    objectOutputStream.writeObject(sudMap);
 	    objectOutputStream.flush();
 	    objectOutputStream.close();
@@ -396,8 +400,14 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileInputStream fileInputStream
 	      = new FileInputStream(file);
 	    ObjectInputStream objectInputStream
-	      = new ObjectInputStream(fileInputStream);
-	    SudFileMap p2 = (SudFileMap) objectInputStream.readObject();
+	      = new ObjectInputStream(new BufferedInputStream(fileInputStream));
+	    SudFileMap p2 = null;
+	    try {
+	    	p2 = (SudFileMap) objectInputStream.readObject();
+	    }
+	    catch  (InvalidClassException e) {
+	    	System.out.println("Invalid sud file map format. It will regenerate with the latest format");
+	    }
 	    objectInputStream.close(); 
 	    return  p2; 
 	 

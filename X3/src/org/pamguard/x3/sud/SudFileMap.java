@@ -15,7 +15,7 @@ public class SudFileMap implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 4L;
 
 	/**
 	 * A list of all chunk headers in the file.
@@ -76,7 +76,7 @@ public class SudFileMap implements Serializable {
 	/**
 	 * time of the first chunk. 
 	 */
-	public long firstChunkTime; 
+	public long firstChunkTimeMicrosecs; 
 
 	/**
 	 * Get the number of channels. 
@@ -103,17 +103,24 @@ public class SudFileMap implements Serializable {
 	}
 
 	/**
-	 * @return the firstChunkTime
+	 * @return the firstChunkTime in microseconds
 	 */
-	public long getFirstChunkTime() {
-		return firstChunkTime;
+	public long getFirstChunkTimeMicros() {
+		return firstChunkTimeMicrosecs;
 	}
 
 	/**
 	 * @param firstChunkTime the firstChunkTime to set
 	 */
-	public void setFirstChunkTime(long firstChunkTime) {
-		this.firstChunkTime = firstChunkTime;
+	public void setFirstChunkTimeMicros(long firstChunkTime) {
+		this.firstChunkTimeMicrosecs = firstChunkTime;
+	}
+
+	/**
+	 * @return the firstChunkTime in milliseconds
+	 */
+	public long getFirstChunkTimeMillis() {
+		return firstChunkTimeMicrosecs/1000;
 	}
 
 }
