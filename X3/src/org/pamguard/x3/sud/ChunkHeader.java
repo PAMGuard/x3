@@ -56,8 +56,17 @@ public class ChunkHeader implements Serializable {
 	 * Get the time in standard Java milliseconds. 
 	 * @return
 	 */
-	long getMillisTime() {
+	public long getMillisTime() {
 		return (long) TimeS * 1000 + TimeOffsetUs / 1000;
+	}
+	
+	/**
+	 * Get the time in standard  Microseconds. This is on the same reference as Java milliseconds
+	 * but with higher resolution.  
+	 * @return
+	 */
+	public long getMicrosecondTime() {
+		return (long) TimeS * 1000000 + TimeOffsetUs;
 	}
 	
 	/**

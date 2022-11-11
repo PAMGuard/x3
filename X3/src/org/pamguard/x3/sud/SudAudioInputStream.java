@@ -1,12 +1,15 @@
 
 package org.pamguard.x3.sud;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -177,6 +180,8 @@ public class SudAudioInputStream extends AudioInputStream {
 				chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
 				chunkHeaderMap.add(chunkHeader); 
 
+				long t = chunkHeader.getMicrosecondTime();
+
 				if (chunkHeader.checkId()) {
 					
 					byte[] data = new byte[chunkHeader.DataLength];
@@ -185,6 +190,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					// System.out.println("--------------");
 					// System.out.println(chunkHeader.toHeaderString());
 					count++;
+					
 
 					// only process chunks if they are XML header
 					if (chunkHeader.ChunkId == 0) {
@@ -207,6 +213,10 @@ public class SudAudioInputStream extends AudioInputStream {
 
 					// count the number of samples from wav chunks
 					if (sudFileExpander.isChunkIDWav(chunkHeader.ChunkId)) {
+
+						if (t != 0 && sudMap.firstChunkTimeMicrosecs == 0) {
+							sudMap.firstChunkTimeMicrosecs = t;
+						}
 
 						sudPrint("HeaderCrc: " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
 
@@ -262,7 +272,7 @@ public class SudAudioInputStream extends AudioInputStream {
 				
 		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
 		
-		sudMap.headerTimeMillis = sudHeader.DeviceTime*1000;
+		sudMap.headerTimeMillis = (long) sudHeader.DeviceTime*1000L;
 		sudMap.chunkHeaderMap = chunkHeaderMap;
 		sudMap.totalSamples = totalSamples;
 		sudMap.sampleRate = wavFileHandler.getSampleRate();
@@ -379,7 +389,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileOutputStream fileOutputStream
 	      = new FileOutputStream(file);
 	    ObjectOutputStream objectOutputStream 
-	      = new ObjectOutputStream(fileOutputStream);
+	      = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
 	    objectOutputStream.writeObject(sudMap);
 	    objectOutputStream.flush();
 	    objectOutputStream.close();
@@ -390,8 +400,14 @@ public class SudAudioInputStream extends AudioInputStream {
 		FileInputStream fileInputStream
 	      = new FileInputStream(file);
 	    ObjectInputStream objectInputStream
-	      = new ObjectInputStream(fileInputStream);
-	    SudFileMap p2 = (SudFileMap) objectInputStream.readObject();
+	      = new ObjectInputStream(new BufferedInputStream(fileInputStream));
+	    SudFileMap p2 = null;
+	    try {
+	    	p2 = (SudFileMap) objectInputStream.readObject();
+	    }
+	    catch  (InvalidClassException e) {
+	    	System.out.println("Invalid sud file map format. It will regenerate with the latest format");
+	    }
 	    objectInputStream.close(); 
 	    return  p2; 
 	 
@@ -539,9 +555,11 @@ public class SudAudioInputStream extends AudioInputStream {
 			} catch (EOFException eof) {
 				// Hmmmmm - this is not the way to do things but there does not seems to be a
 				// number of chunks in the header?
-				 System.out.println("Close the file: ");
+				if (getSudParams().isVerbose()) {
+					System.out.println("Close the file: ");
+				}
 				sudFileExpander.closeFileExpander();
-				eof.printStackTrace();
+//				eof.printStackTrace();
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -585,13 +603,14 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	@Override
 	public int read() throws IOException {
-		if (audioBuffer == null)
-			throw new IOException("The audio buffer is null");
+		if (audioBuffer == null) {
+			throw new EOFException("The audio buffer is null");
+		}
 		if ((readIndex) >= audioBuffer.length) {
 			nextChunk(0);
 		}
 		if (audioBuffer == null)
-			throw new IOException("The audio buffer is null");
+			throw new EOFException("The audio buffer is null");
 		bytesRead++;
 		return audioBuffer[readIndex++];
 	}
@@ -642,9 +661,14 @@ public class SudAudioInputStream extends AudioInputStream {
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
 		int count = 0;
-		for (int i = off; i < (len + off); i++) {
-			b[i] = (byte) this.read();
-			count++;
+		try {
+			for (int i = off; i < (len + off); i++) {
+				b[i] = (byte) this.read();
+				count++;
+			}
+		}
+		catch (EOFException e) {
+			// normal behaviour
 		}
 		return count;
 	}

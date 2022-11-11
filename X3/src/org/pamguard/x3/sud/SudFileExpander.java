@@ -79,9 +79,12 @@ public class SudFileExpander {
 		//TODO - add out folder. 
 		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
-		logFile = new LogFileStream(logFileName);
-		
+		if (sudParams.saveMeta) {
+			logFile = new LogFileStream(logFileName);
+		}
+
 		xmlHandler.init(logFile, "", XML_CHUNK_ID);
+		
 
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
@@ -118,8 +121,9 @@ public class SudFileExpander {
 					//				System.out.println("--------------");
 					//				System.out.println(chunkHeader.toHeaderString());
 					count++;
-
-					System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					if (sudParams.isVerbose()) {
+						System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+					}
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
@@ -155,7 +159,9 @@ public class SudFileExpander {
 			dataHandlers.get(keySet.next()).dataHandler.close();
 		}
 		
-		logFile.close();
+		if (logFile != null) {
+			logFile.close();
+		}
 	}
 
 

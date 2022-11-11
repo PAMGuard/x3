@@ -83,6 +83,22 @@ public class SudParams implements Cloneable {
         return newOne;		
 	}
 
+
+	/**
+	 * @return the verbose
+	 */
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+
+	/**
+	 * @param verbose the verbose to set
+	 */
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+
 	
 	
 	

@@ -80,6 +80,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		}
 
 		//very important t o use trim or else throws an error
+		if (xml == null) {
+			return;
+		}
 		Document doc = convertStringToXMLDocument(xml.trim());
 
 //		System.out.println(doc.getDocumentElement().toString());
