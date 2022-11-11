@@ -177,7 +177,7 @@ public class SudFileExpander {
 		//boolean contains = IntStream.of(dataHandler.getChunkID()).anyMatch(x -> x == chunkId);
 		IDSudar aHandler = dataHandlers.get(chunkId); 
 		
-		//System.out.println("Process data handler: "  + aHandler); 
+		//System.out.println("Process data handler: "  + aHandler.iD + " " + aHandler.srcID + (aHandler==null)); 
 
 		if (aHandler==null) return; 
 

@@ -910,13 +910,12 @@ public class SudAudioInputStream extends AudioInputStream {
 		SudAudioInputStream sudAudioInputStream = null;
 		
 		SudParams sudParams = new SudParams(); 
-		sudParams.saveFolder = "/Users/au671271/Desktop/sud_tests";
+		//sudParams.saveFolder = "/Users/au671271/Desktop/sud_tests";
 		sudParams.saveWav = true; 
 
 		boolean verbose = false; // true to print more stuff.
 		
 		try {
-			
 			
 			
 			sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
