@@ -88,11 +88,23 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //		System.out.println(doc.getDocumentElement().toString());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getNodeName());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getAttributes().item(0));
-		NodeList nodeList = doc.getElementsByTagName("CFG"); 
 		
-		//System.out.println("node len XML: " + nodeList.getLength()); 		
+		int srcID = 0; 
+		NodeList nodeListSrc = doc.getElementsByTagName("SRC"); 
+		if(nodeListSrc!=null && nodeListSrc.getLength() > 0) {
+			for (int i=0; i<nodeListSrc.getLength(); i++) {
+				Node id = nodeListSrc.item(i).getAttributes().getNamedItem("ID");
+				srcID = Integer.valueOf(id.getNodeValue().trim()); 
+			}
+		}
+		//System.out.println("nodeListSrc: " + nodeListSrc.getLength() + " ID: "+	nodeListSrc.item(0).getAttributes().getNamedItem("ID")); 
+
+		//System.out.println("node len XML: " + nodeList.getLength()); 	
+		
+		NodeList nodeList = doc.getElementsByTagName("CFG"); 
 		if(nodeList!=null && nodeList.getLength() > 0) {
 			for (int i=0; i<nodeList.getLength(); i++) {
+				
 				
 				//System.out.println("node len XML: " + nodeList.item(i).getAttributes().getLength()); 
 //				System.out.println("CODEC: " + nodeList.item(i).getAttributes().getNamedItem("CODEC").getNodeValue()); 
@@ -100,8 +112,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 				
 				Node ftype = nodeList.item(i).getAttributes().getNamedItem("FTYPE");
 				Node id = nodeList.item(i).getAttributes().getNamedItem("ID");
-				Node srcid = nodeList.item(i).getAttributes().getNamedItem("CODEC");
-				Node suffix = nodeList.item(i).getAttributes().getNamedItem("SUFFIX");
+				//Node srcid = nodeList.item(i).getAttributes().getNamedItem("CODEC");
+				//Node suffix = nodeList.item(i).getAttributes().getNamedItem("SUFFIX");
 				
 				if(ftype != null && id != null && Integer.valueOf(id.getNodeValue()) != 0) {
 					try {
@@ -111,9 +123,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 						IDSudar idSudar = new IDSudar(); 
 						idSudar.iD = Integer.valueOf(id.getNodeValue().trim()); 
 						idSudar.dataHandler = handler; 
-						if (srcid!=null) {
-							idSudar.srcID = Integer.valueOf(srcid.getNodeValue().trim()); 
-						}
+						idSudar.srcID = srcID;
+						
 						//System.out.println("IDSudar: ID" + idSudar.iD + " " + idSudar.srcID); 
 						
 						dataHandlers.put(idSudar.iD , idSudar);

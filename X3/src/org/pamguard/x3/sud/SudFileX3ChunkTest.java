@@ -33,7 +33,7 @@ public class SudFileX3ChunkTest {
 
 			if (sudFileExpander.getChunkFileType(chunkID).equals("X3V2") && count.get()<MAX_PRINT) {
 				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" x3 DATA:");
-				sudChunk.chunkHeader.toHeaderString(); 
+				System.out.print(sudChunk.chunkHeader.toHeaderString()); 
 				
 				System.out.println("X3 nBytes: " + sudChunk.buffer.length);
 				System.out.println(chunkData2String(sudChunk));
@@ -42,7 +42,7 @@ public class SudFileX3ChunkTest {
 
 			if (sudFileExpander.getChunkFileType(chunkID).equals("wav") && count.get()<MAX_PRINT) {
 				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" WAV DATA:");
-				sudChunk.chunkHeader.toHeaderString(); 
+				System.out.print(sudChunk.chunkHeader.toHeaderString()); 
 				
 				System.out.println("WAV nBytes: " + sudChunk.buffer.length);
 				System.out.println(chunkData2String(sudChunk));
@@ -86,7 +86,7 @@ public class SudFileX3ChunkTest {
 //		for (int i=0; i<sudChunk.buffer.length; i++) {
 //			arr += (sudChunk.buffer[i] + ","); 
 //		}
-		for (int i=0; i<50; i++) {
+		for (int i=0; i<sudChunk.buffer.length; i++) {
 			arr += (sudChunk.buffer[i] + ","); 
 		}
 		return arr; 

@@ -23,6 +23,30 @@ public class SudarFileTest {
 
 		
 		SudFileExpander sudFileExpander = new SudFileExpander(new File(filePath), new SudParams()); 
+		
+		sudFileExpander.addSudFileListener((chunkID, sudChunk)->{
+			
+
+			System.out.println(sudFileExpander.getChunkFileType(chunkID));
+			System.out.println(sudChunk.chunkHeader.toHeaderString()); 
+
+			if (sudFileExpander.getChunkFileType(chunkID).equals("X3V2")) {
+				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" x3 DATA:");
+				sudChunk.chunkHeader.toHeaderString(); 
+				
+				System.out.println("X3 nBytes: " + sudChunk.buffer.length);
+				System.out.println(chunkData2String(sudChunk));
+			}
+			
+			if (sudFileExpander.getChunkFileType(chunkID).equals("wav")) {
+				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" WAV DATA:");
+				sudChunk.chunkHeader.toHeaderString(); 
+				
+				System.out.println("WAV nBytes: " + sudChunk.buffer.length);
+				System.out.println(chunkData2String(sudChunk));
+			}
+		});
+		
 		try {
 			sudFileExpander.processFile();
 		} catch (IOException e) {
@@ -33,7 +57,18 @@ public class SudarFileTest {
 
 		System.out.println("Processing time: " +  (time1-time0));
 
+
+	}
 	
+	public static String chunkData2String(Chunk sudChunk) {
+		String arr = ""; 
+//		for (int i=0; i<sudChunk.buffer.length; i++) {
+//			arr += (sudChunk.buffer[i] + ","); 
+//		}
+		for (int i=0; i<Math.min(sudChunk.buffer.length, 50); i++) {
+			arr += (sudChunk.buffer[i] + ","); 
+		}
+		return arr; 
 	}
 
 }
