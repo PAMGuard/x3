@@ -84,6 +84,13 @@ public class XMLFileHandler implements ISudarDataHandler  {
 			return;
 		}
 		Document doc = convertStringToXMLDocument(xml.trim());
+		if (doc == null) {
+			/*
+			 *  sometimes the doc is coming out as null which seems to happen when 
+			 *  the XML isn't actually XML data but seems to be numeric data.   
+			 */
+			return;
+		}
 
 //		System.out.println(doc.getDocumentElement().toString());
 //		System.out.println(doc.getDocumentElement().getChildNodes().item(1).getNodeName());
@@ -203,7 +210,9 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		} 
 		catch (Exception e) 
 		{
-			e.printStackTrace();
+//			e.printStackTrace();
+			System.err.println("SUD XMLFileHAndler invalid XML string extracted from file: String start is  \""
+					+ xmlString.substring(0, 30) + "\" ...");
 		}
 		return null;
 	}

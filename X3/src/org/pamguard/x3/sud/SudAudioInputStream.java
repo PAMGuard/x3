@@ -472,8 +472,13 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.audioBuffer = null; // reset the audio buffer.
 		
 		//long time1 = System.currentTimeMillis();
+		
+		/*
+		 * why can't count be declared here ? Why is it a field ? It's only used in this function. 
+		 */
 
-		while (true) {
+		int nHead = sudMap.chunkHeaderMap.size();
+		while (count < nHead) {
 			try {
 				// System.out.println("Deserialise: " +
 				// sudFileExpander.getSudInputStream().available());
