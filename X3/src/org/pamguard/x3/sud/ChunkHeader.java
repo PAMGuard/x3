@@ -57,7 +57,7 @@ public class ChunkHeader implements Serializable {
 	 * @return
 	 */
 	public long getMillisTime() {
-		return (long) TimeS * 1000 + TimeOffsetUs / 1000;
+		return Integer.toUnsignedLong(TimeS) * 1000L + TimeOffsetUs / 1000;
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class ChunkHeader implements Serializable {
 	 * @return
 	 */
 	public long getMicrosecondTime() {
-		return (long) TimeS * 1000000 + TimeOffsetUs;
+		return Integer.toUnsignedLong(TimeS) * 1000000L + TimeOffsetUs;
 	}
 	
 	/**
