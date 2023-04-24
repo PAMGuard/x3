@@ -230,7 +230,12 @@ public class SudFileExpander {
 	 * @return true if the chunkID is wav data of the right type. 
 	 */
 	private boolean isChunkIDWavint(int chunkID, String fileSuffix){
-		if (getChunkFileType(chunkID).equals("wav")) {
+		String strId = getChunkFileType(chunkID);
+		if (strId == null) {
+			System.out.println("Unknown SUD chunk id in getChunkFileType(): " + chunkID);
+			return false;
+		}
+		if (strId.equals("wav")) {
 			WavFileHandler wavHandler = (WavFileHandler) getChunkDataHandler(chunkID).dataHandler;
 			if (wavHandler.getFileSuffix().equals(fileSuffix))
 				return true;
