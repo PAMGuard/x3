@@ -49,7 +49,8 @@ public class SudFileMap implements Serializable {
 	public int nChannels = 1;
 	
 	/**
-	 * The sample rate of the click detector. NaN if there is no click detector
+	 * The sample rate of the click detector. NaN if there is no click detector data. 
+	 * Better to use SUDClickDetectorInfo which is present even if there were no detections
 	 */
 	public float clickDetSampleRate = Float.NaN; 
 	
@@ -76,7 +77,12 @@ public class SudFileMap implements Serializable {
 	/**
 	 * time of the first chunk. 
 	 */
-	public long firstChunkTimeMicrosecs; 
+	public long firstChunkTimeMicrosecs;
+
+	/**
+	 * SUD file Sound trap detector information. 
+	 */
+	public SUDClickDetectorInfo detectorInfo; 
 
 	/**
 	 * Get the number of channels. 

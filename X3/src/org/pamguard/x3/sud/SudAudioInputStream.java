@@ -15,7 +15,17 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import javax.sound.sampled.AudioFormat.Encoding;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Opens a .sud file as an AudioinputStream.
@@ -199,14 +209,25 @@ public class SudAudioInputStream extends AudioInputStream {
 						if (sudMap.xmlMetaData==null) {
 							sudMap.xmlMetaData = new String();
 						}
-						
+						/* 
+						 * Data (from C!) are probably null terminated strings so the last character is
+						 * likely to be 0, which we don't want. So prepare to strip i toff. 
+						 */
+						int strLen = data.length;
+						while (data[strLen-1] == 0) {
+							strLen--;
+						}
 						//XMLFileHandler.swapEndian(data); // the data endian has already been swapped by the processChunk function
-						sudMap.xmlMetaData += new String(data, "UTF-8");
+						sudMap.xmlMetaData += new String(data, 0, strLen, "UTF-8");
 		
 						// mark the last point at which a ChunkID of 0 is found. Means we don't need to
 						// iterate through
 						// this part of the stream again.
 						// mark = sudFileExpander.getSudInputStream().available();
+					}
+					
+					if (chunkHeader.ChunkId == 12) {
+//						System.out.println("Chunkid 12!");
 					}
 
 					// System.out.println(sudFileExpander.getChunkIDString(chunkHeader.ChunkId));
@@ -265,12 +286,21 @@ public class SudAudioInputStream extends AudioInputStream {
 						dwvFileHandler = (WavFileHandler) sudFileExpander.getChunkDataHandler(chunkHeader.ChunkId).dataHandler; 
 					}
 				}
-			} catch (EOFException eof) {
+				else {
+//					System.out.printf("Unknown SUD chunk id 0x%X\n", chunkHeader.majicNo);
+				}
+			} 
+			catch (EOFException eof) {
 				break;
+			}
+			catch (Exception e) {
+				System.out.println("Unhandled exception in mapping " + e.getLocalizedMessage());
 			}
 		}
 				
 		sudPrint("No. data handlers: " + sudFileExpander.getDataHandlers().size(), verbose);
+		
+//		System.out.println(sudMap.xmlMetaData);
 		
 		sudMap.headerTimeMillis = (long) sudHeader.DeviceTime*1000L;
 		sudMap.chunkHeaderMap = chunkHeaderMap;
@@ -897,9 +927,33 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * @return the sud file map. 
 	 */
 	public SudFileMap getSudMap() {
+		checkDetectorInformation(this.sudMap);
 		return this.sudMap;
 	}
 
+
+	/**
+	 * Pull mor edetailed detector information out of the xml in the SUD file map
+	 * <p>The simple clickDetectorSampleRate field doesn't cut it. 
+	 * @param sudMap2
+	 */
+	private void checkDetectorInformation(SudFileMap sudMap) {
+		if (sudMap == null) {
+			return;
+		}
+		/**
+		 * There is a fair amount of non standard stuff in the ST XML and 
+		 * it won't easily parse into a document. Two things I've found so far
+		 * are getting rid of some 0 characters in the array and also the need
+		 * for XML documents to have a single root element. 
+		 * So code below replaces zeros with spaces and wraps it in a <ST> selement. 
+		 */
+		SUDXMLUtils sudXmlUtils = new SUDXMLUtils();
+		String xml = sudMap.xmlMetaData;
+		Document doc = sudXmlUtils.createDocument(xml);
+		SUDClickDetectorInfo detInfo = sudXmlUtils.extractDetectorInfo(doc);
+		sudMap.detectorInfo = detInfo;
+	}
 
 	/**
 	 * Test decompression on a file using a SudAudioInputStream. 
