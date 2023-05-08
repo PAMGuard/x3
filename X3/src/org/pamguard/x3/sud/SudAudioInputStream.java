@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 
+import org.pamguard.x3.x3.CRC16;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -197,6 +198,10 @@ public class SudAudioInputStream extends AudioInputStream {
 					byte[] data = new byte[chunkHeader.DataLength];
 
 					sudFileExpander.getSudInputStream().readFully(data);
+					int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+					if (dataCRC != chunkHeader.DataCrc) {
+						continue;
+					}
 					// System.out.println("--------------");
 					// System.out.println(chunkHeader.toHeaderString());
 					count++;
@@ -218,7 +223,15 @@ public class SudAudioInputStream extends AudioInputStream {
 							strLen--;
 						}
 						//XMLFileHandler.swapEndian(data); // the data endian has already been swapped by the processChunk function
-						sudMap.xmlMetaData += new String(data, 0, strLen, "UTF-8");
+						String newBit = new String(data, 0, strLen, "UTF-8");
+						sudMap.xmlMetaData += newBit;
+						for (int b = 0; b < data.length; b++) {
+							if (data[b] < 0) {
+								System.out.println(sudMap.xmlMetaData);
+								break;
+							}
+						}
+					
 
 						// mark the last point at which a ChunkID of 0 is found. Means we don't need to
 						// iterate through
@@ -534,6 +547,10 @@ public class SudAudioInputStream extends AudioInputStream {
 						if (bytes2SkipLeft < bytesInChunk) {
 
 							sudFileExpander.getSudInputStream().readFully(data);
+							int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+							if (dataCRC != chunkHeader.DataCrc) {
+								continue;
+							}
 
 							sudPrint("Chunk ID: " + chunkHeader.ChunkId + "  magic OK? " + chunkHeader.checkId() + " "
 									+ sudFileExpander.getChunkFileType(chunkHeader.ChunkId) + "data len: "
@@ -577,6 +594,11 @@ public class SudAudioInputStream extends AudioInputStream {
 						//						if(sudFileExpander.getSudParams().saveMeta) {
 
 						sudFileExpander.getSudInputStream().readFully(data);
+						int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+						if (dataCRC != chunkHeader.DataCrc) {
+							continue;
+						}
+						
 						sudFileExpander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
 
 
@@ -1002,7 +1024,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			//			}
 			//			else
 			sudFileMap = loadedFileMap; 
-			System.out.println(sudFileMap.xmlMetaData);
+//			System.out.println(sudFileMap.xmlMetaData);
 		}
 		else {
 

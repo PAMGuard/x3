@@ -15,7 +15,7 @@ public class SudFileMap implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 4L;
+	private static final long serialVersionUID = 5L;
 
 	/**
 	 * A list of all chunk headers in the file.

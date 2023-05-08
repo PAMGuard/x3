@@ -1,8 +1,12 @@
 package org.pamguard.x3.sud;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.Serializable;
+
+import org.pamguard.x3.x3.CRC16;
 
 /**
  * The chunk header for each block within the sud files. 
@@ -39,15 +43,21 @@ public class ChunkHeader implements Serializable {
 	public static ChunkHeader deSerialise(DataInput bufinput) throws IOException {
 		
 		ChunkHeader header = new ChunkHeader(); 
+		byte[] headData = new byte[20];
+		bufinput.readFully(headData);
+		DataInput di = new SudDataInputStream(new ByteArrayInputStream(headData));
 
-		header.majicNo = bufinput.readUnsignedShort();
-		header.ChunkId = bufinput.readUnsignedShort();
-		header.DataLength = bufinput.readUnsignedShort();
-		header.SampleCount = bufinput.readUnsignedShort(); 
-		header.TimeS = bufinput.readInt();
-		header.TimeOffsetUs = bufinput.readInt();
-		header.DataCrc = bufinput.readUnsignedShort();
-		header.HeaderCrc = bufinput.readUnsignedShort();
+		header.majicNo = di.readUnsignedShort();
+		header.ChunkId = di.readUnsignedShort();
+		header.DataLength = di.readUnsignedShort();
+		header.SampleCount = di.readUnsignedShort(); 
+		header.TimeS = di.readInt();
+		header.TimeOffsetUs = di.readInt();
+		header.DataCrc = di.readUnsignedShort();
+		header.HeaderCrc = di.readUnsignedShort();
+
+		int crc = CRC16.getCRC16(headData, 2, 16);
+		if (crc < 0) crc += 65536;
 
 		return header;
 	}
@@ -75,7 +85,7 @@ public class ChunkHeader implements Serializable {
 	 * @return true if the chunk header is valid. 
 	 */
 	public boolean checkId() {
-		return majicNo == 0xA952;
+		return majicNo == 0xA952; // 43346 dec.
 	}
 	
 	

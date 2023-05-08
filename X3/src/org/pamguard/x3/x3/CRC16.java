@@ -72,4 +72,29 @@ public class CRC16 {
 		return getCRC16(byteBuffer, nBytes, 0);
 	}
 
+	/**
+	 * Calculate the CRC in exactly the same way as in the C code SUD file checking.
+	 * This seems a bit different to the two other CRC functions in this class, but
+	 * it's probably best not to mess with them. 
+	 * @param bytes byte buffer from SUD file
+	 * @param length length of buffer
+	 * @return CRC
+	 */
+	public static synchronized int calcSUD(byte[] bytes, int length) {
+		int fcs = 0xFFFF;
+		int i = 0;
+		while (i < length) {
+			int ac2 = (int)(fcs>>8)^bytes[i+1];
+			int to = ac2 & 0x00ff;
+			fcs = (fcs << 8);
+			fcs = fcs ^ CRCtab[to];
+			int  ac1 = (int)(fcs>>8) ^ bytes[i];
+			to = ac1 & 0x00ff;
+			fcs = fcs << 8;
+			fcs = fcs ^ CRCtab[to];
+			i+=2;
+		}
+		return  (fcs & 0xFFFF);
+	}
+
 }
