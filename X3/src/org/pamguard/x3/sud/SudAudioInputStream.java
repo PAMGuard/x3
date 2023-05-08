@@ -223,6 +223,12 @@ public class SudAudioInputStream extends AudioInputStream {
 							strLen--;
 						}
 						//XMLFileHandler.swapEndian(data); // the data endian has already been swapped by the processChunk function
+						// swap zeros to carriage returns
+						for (int i = 0; i < data.length; i++) {
+							if (data[i] == 0) {
+								data[i] = 13;
+							}
+						}
 						String newBit = new String(data, 0, strLen, "UTF-8");
 						sudMap.xmlMetaData += newBit;
 						for (int b = 0; b < data.length; b++) {
