@@ -72,7 +72,12 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //		for (int i=0; i<xml.length(); i++) {
 //			System.out.println(i + "  " +xml.charAt(i)); 
 //		}
-		//System.out.println(xml.trim());
+//		System.out.println("XML Arrive length " + subChunk.buffer.length);
+//		if (subChunk.buffer.length > 1000) {
+//
+//			System.out.println("XML Arrive length " + subChunk.buffer.length);
+//		}
+//		System.out.println(xml);
 		
 		//save to the log file. 
 		if (this.saveMeta) {

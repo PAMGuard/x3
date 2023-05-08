@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.pamguard.x3.x3.CRC16;
+
 
 /**
  * 
@@ -128,13 +130,25 @@ public class SudFileExpander {
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
 //					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
+					int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
+					if (crc != chunkHeader.DataCrc) {
+						System.out.println("Bad data CRC");
+						continue;
+					}
 
 
 					//process the chunk
+					if (chunkHeader.ChunkId == 0) {
+						System.out.printf("Chunk id 0 ");
+					}
 					processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
+					
 					
 //					//TEMP TEMP TEMP to just grab the first x3 file
 					//if (chunkHeader.ChunkId==3 && count>22) return;
+				}
+				else {
+					bufinput.skipBytes(chunkHeader.DataLength);
 				}
 
 			}
@@ -179,7 +193,9 @@ public class SudFileExpander {
 		
 		//System.out.println("Process data handler: "  + aHandler.iD + " " + aHandler.srcID + (aHandler==null)); 
 
-		if (aHandler==null) return; 
+		if (aHandler==null) {
+			return; 
+		}
 
 		if (aHandler.srcID > 0 ) {
 
