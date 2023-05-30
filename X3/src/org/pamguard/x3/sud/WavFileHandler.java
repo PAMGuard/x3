@@ -22,7 +22,7 @@ import org.w3c.dom.NodeList;
 
 
 /**
- * Write wav files from the X3 data (or umcompressed data blocks in the SUD files). 
+ * Write wav files from the X3 data (or uncompressed data blocks in the SUD files). 
  * 
  * @author Jamie Macaulay
  *
@@ -60,7 +60,6 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private PipedOutputStream pipedOutputStream;
 
-
 	private AudioInputStream audioInputStream;
 
 	private Thread writeThread;
@@ -97,6 +96,15 @@ public class WavFileHandler implements ISudarDataHandler {
 	private Integer nBits; 
 
 	/**
+	 * The bit shift. Data decompressed in the X3 is always 2+ bytes. But, the ADC
+	 * that saved them may not be a 16 bit ADC. It could for example be a 12 bit
+	 * ADC. In this case there is not point in bit shifting to 16 bits because X3
+	 * compression will be less effective.
+	 */
+	private Integer bitShift;
+
+
+	/**
 	 * True to save the wav files. 
 	 */
 	private boolean saveWav = true;
@@ -122,8 +130,10 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	int count=0;
 
+
 	@Override
 	public void processChunk(Chunk sudChunk) {
+		
 
 		//System.out.println("Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0]);
 
@@ -196,7 +206,7 @@ public class WavFileHandler implements ISudarDataHandler {
 			//System.out.println("Write wav: " + ++count + " " + sudChunk.chunkHeader.HeaderCrc );
 
 			if (saveWav) {
-				pipedOutputStream.write(sudChunk.buffer);
+				pipedOutputStream.write(bitShiftChunk(sudChunk.buffer));
 			}
 			lastChunk = sudChunk;
 
@@ -207,6 +217,26 @@ public class WavFileHandler implements ISudarDataHandler {
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * But shift the chunk data. The data may be bit <16 bit but is represented by
+	 * two bytes. The bitShift variable indicates if this is the case. Data has to
+	 * be shifted back so it takes up the full bit size of the audio file.
+	 * 
+	 * @param buffer - the input buffer
+	 * @return bit shifted buffer.
+	 */
+	private byte[] bitShiftChunk(byte[] buffer) {
+		if (this.bitShift==null) {
+			return buffer;
+		}
+		else {
+			//TODO
+			//need to bit shift all the bytes.
+			return buffer;
+
+		}
 	}
 
 	public String getFileSuffix() {
@@ -277,15 +307,17 @@ public class WavFileHandler implements ISudarDataHandler {
 	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
+		
+		//System.out.println(innerXml); 
 
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 
-		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS"},  nodeList);
-		//		for (int i=0; i<nodeContent.size(); i++) {
-		//			System.out.println(nodeContent.values().toArray()[i]);
-		//		}
+		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS", "BITSHIFT"},  nodeList);
+				for (int i=0; i<nodeContent.size(); i++) {
+					System.out.println(nodeContent.values().toArray()[i]);
+				}
 
 		channel = -1;
 		nChan = 1;
@@ -298,7 +330,8 @@ public class WavFileHandler implements ISudarDataHandler {
 		fileSuffix = nodeContent.get("SUFFIX");
 
 		nBits = Integer.valueOf(nodeContent.get("NBITS"));
-
+				
+		if (nodeContent.get("BITSHIFT")!=null) bitShift = Integer.valueOf(nodeContent.get("BITSHIFT"));
 		if (nodeContent.get("TIMECHK")!=null) timeCheck = Integer.valueOf(nodeContent.get("TIMECHK"));
 		if (nodeContent.get("CHANNEL")!=null) channel = Integer.valueOf(nodeContent.get("CHANNEL"));
 		nChan = Integer.valueOf(nodeContent.get("NCHS"));

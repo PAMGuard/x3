@@ -71,7 +71,7 @@ public class X3Handler implements ISudarDataHandler {
 		//System.out.println("Process X3 file: " + buf.length);
 
 		
-		//System.out.println("Process X3 chunk START: " + buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
+		//System.out.println("Process X3 chunk START: " +  buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
 	
 		
 		//set the relevent data for the X3 header
@@ -147,7 +147,7 @@ public class X3Handler implements ISudarDataHandler {
 //		System.out.println("Process X3 chunk: " + nChan);
 		//short[] wavData = x3FrameDecode.unpackX3Frame(x3Head, buf, 0, null,  blockLength); 
 		
-		//System.out.println("Process X3 chunk END: " + buf.length + "  " + ch.SampleCount);
+		//System.out.println("Process X3 chunk END: " + sudChunk.buffer.length + "  " + ch.SampleCount);
 
 	}
 

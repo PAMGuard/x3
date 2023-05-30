@@ -147,8 +147,6 @@ public class TxtFileHandler implements ISudarDataHandler {
 	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.chunkIds = new int[]{id};
 		
-		this.chunkIds = new int[]{id};
-
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
@@ -156,7 +154,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"SUFFIX"},  nodeList);
 
 		fileSuffix = nodeContent.get("SUFFIX");
-
+		
 	}
 
 	@Override
