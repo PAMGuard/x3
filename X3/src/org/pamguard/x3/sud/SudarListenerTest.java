@@ -21,7 +21,7 @@ public class SudarListenerTest {
 		
 		SudParams sudParams = new SudParams(); 
 		sudParams.saveFolder = null;
-		sudParams.saveWav = true; 
+		sudParams.setSaveWav(true);
 
 		boolean verbose = false; // true to print more stuff.
 		

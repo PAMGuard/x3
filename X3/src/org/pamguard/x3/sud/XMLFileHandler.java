@@ -24,6 +24,8 @@ import org.xml.sax.InputSource;
  */
 public class XMLFileHandler implements ISudarDataHandler  {
 	
+	public static String XML_FILE_SUFFIX = "xml"; 
+	
 	private int[] chunkIds;
 	
 	/**
@@ -55,9 +57,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 	public XMLFileHandler(SudParams sudParams, HashMap<Integer, IDSudar> dataHandlers) {
 		this.dataHandlers = dataHandlers;
-		this.saveMeta=sudParams.saveMeta;
 		this.sudarParams=sudParams;
-
+		this.saveMeta=sudParams.isFileSave(XML_FILE_SUFFIX); 
 	}
 
 	@Override

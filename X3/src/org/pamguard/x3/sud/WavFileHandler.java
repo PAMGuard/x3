@@ -84,7 +84,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private Chunk firstChunk;
 
-	private boolean zeroFill = true; 
+//	private boolean zeroFill = true; 
 
 	private LogFileStream logFile;
 
@@ -109,33 +109,41 @@ public class WavFileHandler implements ISudarDataHandler {
 	 */
 	private boolean saveWav = true;
 
-	private boolean saveMeta;
+//	private boolean saveMeta;
+
+	/**
+	 * The sud parameters.
+	 */
+	private SudParams sudParams;
 
 
 	//the difference between the sample count and the device's on board clock before a correction is made
 	public static double timeErrorWarningThreshold = 0.04; //%
 
 
-	public WavFileHandler(SudParams filePath, String ftype) {
-		this.sudFile = new File(filePath.getSudFilePath());
+	public WavFileHandler(SudParams sudParams, String ftype) {
+		this.sudFile = new File(sudParams.getSudFilePath());
+		
+		this.sudParams = sudParams.clone();
 
-		this.fileName = filePath.getOutFilePath();
-		this.saveWav = filePath.saveWav;
-		this.saveMeta = filePath.saveMeta;
-
-		this.zeroFill = filePath.zeroPad;
+		this.fileName = sudParams.getOutFilePath();
+//		//this.saveWav = sudParams.saveWav;
+//		this.saveMeta = sudParams.saveXML;
+//
+//		this.zeroFill = sudParams.zeroPad;
 
 		this.ftype=ftype; 
 	}
 
 	int count=0;
 
+	private boolean saveDWV;
+
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
 		
-
-		//System.out.println("Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0]);
+		//System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
 
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
@@ -176,8 +184,8 @@ public class WavFileHandler implements ISudarDataHandler {
 					if (error > 0) {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
-							if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
-							if (zeroFill) {
+							if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							if (sudParams.zeroPad) {
 
 								//System.out.println("Error: " + error + " " + nChan ); 
 								int samplesToAdd = (int)(error * (fs / 1000000));
@@ -189,7 +197,7 @@ public class WavFileHandler implements ISudarDataHandler {
 								//fsWavOut.Write(fill, 0, fill.Length);
 								error = 0;
 								cumulativeSamples += samplesToAdd;
-								if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
 							}
 						}
 					} 
@@ -246,7 +254,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	@Override
 	public void close() {
 
-		if (this.lastChunk!=null && saveMeta) {
+		if (this.lastChunk!=null && sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) {
 
 			// the format of your date
 			SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 
@@ -329,6 +337,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		fs = Integer.valueOf(nodeContent.get("FS"));
 		fileSuffix = nodeContent.get("SUFFIX");
 
+	
 		nBits = Integer.valueOf(nodeContent.get("NBITS"));
 				
 		if (nodeContent.get("BITSHIFT")!=null) bitShift = Integer.valueOf(nodeContent.get("BITSHIFT"));
@@ -338,6 +347,12 @@ public class WavFileHandler implements ISudarDataHandler {
 
 		//create the audio format. 
 		AudioFormat audioFormat = new AudioFormat(fs, 16,nChan, true, false);
+		
+		//should or should we not save the wav file?
+		//todo
+		saveWav = sudParams.isFileSave(fileSuffix); 
+		
+//		System.out.println("SAVE WAV FILES: " + saveWav); 
 
 		if (saveWav) {
 			///create the wav writer
@@ -353,6 +368,14 @@ public class WavFileHandler implements ISudarDataHandler {
 				Ex.printStackTrace();
 			}
 		}
+	}
+
+	public boolean isDwv(String fileSuffix2) {
+		return fileSuffix2.toLowerCase().equals("dwv");
+	}
+
+	public boolean isWav(String fileSuffix2) {
+		return fileSuffix2.toLowerCase().equals("wav");
 	}
 
 	@Override

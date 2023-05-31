@@ -47,6 +47,11 @@ public class TxtFileHandler implements ISudarDataHandler {
 	private boolean saveMeta;
 
 	private FileWriter sw;
+	
+	/**
+	 * Reference to the sud params. 
+	 */
+	private SudParams sudParams;
 
 	public TxtFileHandler(String filePath) {
 		this.sudFile = new File(filePath);
@@ -57,7 +62,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 		this.sudFile = new File(filePath.getSudFilePath());
 		this.fileName =filePath.getOutFilePath();
 		this.ftype=ftype; 
-		this.saveMeta = filePath.saveMeta;
+		this.sudParams= filePath; 
 	}
 	
 
@@ -154,6 +159,9 @@ public class TxtFileHandler implements ISudarDataHandler {
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"SUFFIX"},  nodeList);
 
 		fileSuffix = nodeContent.get("SUFFIX");
+		
+		this.saveMeta = sudParams.isFileSave(fileSuffix);
+
 		
 	}
 
