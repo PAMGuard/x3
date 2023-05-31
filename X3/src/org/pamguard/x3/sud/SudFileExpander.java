@@ -81,7 +81,7 @@ public class SudFileExpander {
 		//TODO - add out folder. 
 		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
-		if (sudParams.saveMeta) {
+		if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) {
 			logFile = new LogFileStream(logFileName);
 		}
 
@@ -137,10 +137,10 @@ public class SudFileExpander {
 					}
 
 
-					//process the chunk
-					if (chunkHeader.ChunkId == 0) {
-						System.out.printf("Chunk id 0 ");
-					}
+//					//process the chunk
+//					if (chunkHeader.ChunkId == 0) {
+//						System.out.printf("Chunk id 0 ");
+//					}
 					processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
 					
 					
