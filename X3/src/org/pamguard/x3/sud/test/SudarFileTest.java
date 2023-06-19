@@ -1,8 +1,12 @@
 
-package org.pamguard.x3.sud;
+package org.pamguard.x3.sud.test;
 
 import java.io.File;
 import java.io.IOException;
+
+import org.pamguard.x3.sud.Chunk;
+import org.pamguard.x3.sud.SudFileExpander;
+import org.pamguard.x3.sud.SudParams;
 
 /**
  * Basic test for opening a .sud file
@@ -25,11 +29,13 @@ public class SudarFileTest {
 //		String filePath = "/Users/au671271/Library/Mobile Documents/com~apple~CloudDocs/Dev/X3/X3/test_sud.sud";
 		
 		
-		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
+		String filePath = "/Volumes/JamieBack_1/x3/sud_dataset_1chan_clks/7140.221020160451.sud";
 
 		SudParams sudParams = new SudParams();
-		sudParams.setVerbose(true);
-		sudParams.setFileSave(false, false, false, true);
+		sudParams.setVerbose(false);
+		sudParams.setFileSave(true, true, true, false);
+		sudParams.setSudEnable(true, true, true);
+
 
 		SudFileExpander sudFileExpander = new SudFileExpander(new File(filePath), sudParams); 
 		

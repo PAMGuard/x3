@@ -81,7 +81,7 @@ public class SudFileExpander {
 		//TODO - add out folder. 
 		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
-		if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) {
+		if (sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX)) {
 			logFile = new LogFileStream(logFileName);
 		}
 
@@ -130,12 +130,20 @@ public class SudFileExpander {
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
 //					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
+					
+					//check the crc to make sure data is intact
 					int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
 					if (crc != chunkHeader.DataCrc) {
 						System.out.println("Bad data CRC");
 						continue;
 					}
-
+					
+					//create a key for the data handler
+					ISudarKey key = getIDSudarKey(chunkHeader.ChunkId);
+					Boolean enable = sudParams.fileSuffixDisable.get(key);
+					if (enable!=null && enable==false) {
+						continue;
+					}
 
 //					//process the chunk
 //					if (chunkHeader.ChunkId == 0) {
@@ -160,6 +168,17 @@ public class SudFileExpander {
 		
 		//close everything. 
 		closeFileExpander();
+	}
+	
+	
+	/**
+	 * Get a key associated with the chunkID
+	 * @param chunkID - the chunk ID
+	 * @return the key for the data handler. 
+	 */
+	public ISudarKey getIDSudarKey(int chunkID) {
+		return new ISudarKey(dataHandlers.get(chunkID).dataHandler.getHandlerType(),
+				dataHandlers.get(chunkID).dataHandler.getFileType()); 
 	}
 	
 	

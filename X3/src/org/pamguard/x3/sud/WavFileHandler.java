@@ -15,7 +15,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
-import org.apache.commons.io.FilenameUtils;
 import org.pamguard.x3.utils.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -109,7 +108,10 @@ public class WavFileHandler implements ISudarDataHandler {
 	 */
 	private boolean saveWav = true;
 
-//	private boolean saveMeta;
+	/**
+	 * True to save matadata in xml files. 
+	 */
+	private boolean saveMeta;
 
 	/**
 	 * The sud parameters.
@@ -128,7 +130,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 		this.fileName = sudParams.getOutFilePath();
 //		//this.saveWav = sudParams.saveWav;
-//		this.saveMeta = sudParams.saveXML;
+		this.saveMeta = sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX);
 //
 //		this.zeroFill = sudParams.zeroPad;
 
@@ -184,7 +186,9 @@ public class WavFileHandler implements ISudarDataHandler {
 					if (error > 0) {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
-							if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							if (saveMeta) {
+								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							}
 							if (sudParams.zeroPad) {
 
 								//System.out.println("Error: " + error + " " + nChan ); 
@@ -197,7 +201,9 @@ public class WavFileHandler implements ISudarDataHandler {
 								//fsWavOut.Write(fill, 0, fill.Length);
 								error = 0;
 								cumulativeSamples += samplesToAdd;
-								if (sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								if (saveMeta) {
+									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								}
 							}
 						}
 					} 
@@ -254,7 +260,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	@Override
 	public void close() {
 
-		if (this.lastChunk!=null && sudParams.isFileSave(XMLFileHandler.XML_FILE_SUFFIX)) {
+		if (this.lastChunk!=null && saveMeta) {
 
 			// the format of your date
 			SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 
@@ -323,9 +329,9 @@ public class WavFileHandler implements ISudarDataHandler {
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS", "BITSHIFT"},  nodeList);
-				for (int i=0; i<nodeContent.size(); i++) {
-					System.out.println(nodeContent.values().toArray()[i]);
-				}
+//				for (int i=0; i<nodeContent.size(); i++) {
+//					System.out.println(nodeContent.values().toArray()[i]);
+//				}
 
 		channel = -1;
 		nChan = 1;
@@ -350,7 +356,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		
 		//should or should we not save the wav file?
 		//todo
-		saveWav = sudParams.isFileSave(fileSuffix); 
+		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
 		
 //		System.out.println("SAVE WAV FILES: " + saveWav); 
 
@@ -459,6 +465,9 @@ public class WavFileHandler implements ISudarDataHandler {
 	//		}
 	//
 	//	}
-
+	@Override
+	public String getFileType() {
+		return fileSuffix;
+	}
 
 }

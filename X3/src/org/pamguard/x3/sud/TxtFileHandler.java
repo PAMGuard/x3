@@ -160,7 +160,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 
 		fileSuffix = nodeContent.get("SUFFIX");
 		
-		this.saveMeta = sudParams.isFileSave(fileSuffix);
+		this.saveMeta = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.TXT_FTYPE, fileSuffix));
 
 		
 	}
@@ -173,6 +173,11 @@ public class TxtFileHandler implements ISudarDataHandler {
 	@Override
 	public String getHandlerType() {
 		return ftype;
+	}
+
+	@Override
+	public String getFileType() {
+		return fileSuffix;
 	}
 
 
