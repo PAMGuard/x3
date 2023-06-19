@@ -1,10 +1,13 @@
-package org.pamguard.x3.sud;
+package org.pamguard.x3.sud.test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.pamguard.x3.sud.Chunk;
+import org.pamguard.x3.sud.SudFileExpander;
+import org.pamguard.x3.sud.SudParams;
 import org.pamguard.x3.x3.RiceTable;
 
 

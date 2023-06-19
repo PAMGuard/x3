@@ -9,6 +9,14 @@ package org.pamguard.x3.sud;
  */
 public interface ISudarDataHandler {
 	
+	
+	public static final String X3_FTYPE 	= "x3v2"; 
+	public static final String WAV_FTYPE 	= "wav"; 
+	public static final String TXT_FTYPE 	= "txt"; 
+	public static final String CSV_FTYPE 	= "csv"; 
+	public static final String XML_FTYPE 	= "xml"; 
+
+	
 	/**
 	 * Process a chunk for the specific handler.
 	 * @param sudChunk - class which contains the chunk header and the data.
@@ -39,14 +47,20 @@ public interface ISudarDataHandler {
 	 */
 	public String getHandlerType();
 	
+	/**
+	 * Get the type of output file. Can be null. 
+	 * @return the handler type. 
+	 */
+	public String getFileType();
 	
+
 	
 	static public ISudarDataHandler createHandler(String ftype, SudParams sudFileData) throws FileFormatNotSupportedException {
 		switch(ftype.toLowerCase()) {
-				case "x3v2": return new X3Handler(sudFileData,  ftype);
-				case "wav": return new WavFileHandler(sudFileData, ftype);
-				case "txt": return new TxtFileHandler(sudFileData, ftype);
-				case "csv": return new CsvFileHandler(sudFileData, ftype);
+				case X3_FTYPE: return new X3Handler(sudFileData,  ftype);
+				case WAV_FTYPE: return new WavFileHandler(sudFileData, ftype);
+				case TXT_FTYPE: return new TxtFileHandler(sudFileData, ftype);
+				case CSV_FTYPE: return new CsvFileHandler(sudFileData, ftype);
 				default : throw new FileFormatNotSupportedException(String.format("FType %s not supported", ftype));
 		}
 	}
