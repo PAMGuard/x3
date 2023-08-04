@@ -87,7 +87,6 @@ public class SudFileExpander {
 
 		xmlHandler.init(logFile, "", XML_CHUNK_ID);
 		
-
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
 		return sudHeader; 
@@ -101,6 +100,7 @@ public class SudFileExpander {
 
 		return openSudFile(bufinput); 
 	}
+	
 
 	/**
 	 * Process a single .sud file. This will process the entire file. 
@@ -237,6 +237,7 @@ public class SudFileExpander {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	/**
 	 * Check whether a chunk ID is an uncompressed chunk of wav data from CONTINUOUS
