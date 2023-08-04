@@ -29,11 +29,12 @@ public class SudarFileTest {
 //		String filePath = "/Users/au671271/Library/Mobile Documents/com~apple~CloudDocs/Dev/X3/X3/test_sud.sud";
 		
 		
-		String filePath = "/Volumes/JamieBack_1/x3/sud_dataset_1chan_clks/7140.221020160451.sud";
+//		String filePath = "/Volumes/JamieBack_1/x3/sud_dataset_1chan_clks/7140.221020160451.sud";
+		String filePath = "D:\\x3\\sudexample_3chan\\738742278.180708083005.sud";
 
 		SudParams sudParams = new SudParams();
 		sudParams.setVerbose(false);
-		sudParams.setFileSave(true, true, true, false);
+		sudParams.setFileSave(false, true, true, false);
 		sudParams.setSudEnable(true, true, true);
 
 
