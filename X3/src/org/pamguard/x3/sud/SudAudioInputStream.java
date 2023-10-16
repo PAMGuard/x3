@@ -177,6 +177,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		ChunkHeader chunkHeader;
 		long timeMicros = -1; 
 		int count = 0; 
+		
 		while(true){
 			try {
 				chunkHeader = ChunkHeader.deSerialise(inputStream);
@@ -203,7 +204,9 @@ public class SudAudioInputStream extends AudioInputStream {
 
 			}
 			catch (Exception e) {
+				System.out.println("Error getting time from file: " + file);
 				e.printStackTrace();
+				break; //important or an error will introduce an infinite loop...
 			}
 		}
 
@@ -1004,7 +1007,8 @@ public class SudAudioInputStream extends AudioInputStream {
 //		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
 //		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/corrupt_example/7124.221217233726.sud";
 		
-		String filePath = "G:\\My Drive\\PAMGuard_dev\\sud_decompression\\singlechan_dataset\\67158026.180831195821.sud";
+//		String filePath = "G:\\My Drive\\PAMGuard_dev\\sud_decompression\\singlechan_dataset\\67158026.180831195821.sud";
+		String filePath = "Z:\\WP1b Drifting Array Data\\PLABuoy1\\SoundTrap\\20221129\\671383589.221129131747.sud";
 
 		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
 		SudAudioInputStream sudAudioInputStream = null;
