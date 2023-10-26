@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -18,15 +17,8 @@ import javax.sound.sampled.AudioInputStream;
 
 import org.pamguard.x3.x3.CRC16;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.sound.sampled.AudioFormat.Encoding;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Opens a .sud file as an AudioinputStream.
@@ -108,9 +100,9 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * The {@code InputStream} from which this {@code AudioInputStream} object was
 	 * constructed.
 	 */
-	private InputStream stream;
-
-	private Chunk currentAudioChunk;
+	//	private InputStream stream;
+	//
+	//	private Chunk currentAudioChunk;
 
 	private int count = 0;
 
@@ -185,7 +177,7 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		SudFileMap sudMap = new SudFileMap(); 
 
-		int count = 0;
+		int mapCount = 0;
 		while (true) {
 			try {
 				chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
@@ -204,7 +196,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					}
 					// System.out.println("--------------");
 					// System.out.println(chunkHeader.toHeaderString());
-					count++;
+					mapCount++;
 
 
 					// only process chunks if they are XML header
@@ -237,7 +229,7 @@ public class SudAudioInputStream extends AudioInputStream {
 								break;
 							}
 						}
-					
+
 
 						// mark the last point at which a ChunkID of 0 is found. Means we don't need to
 						// iterate through
@@ -524,7 +516,17 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		/*
 		 * why can't count be declared here ? Why is it a field ? It's only used in this function. 
+		 * Count should have been set zero before this was called, so we can increment it 
+		 * easily enough in roughSkip and hopefully keep everything lined up. 
 		 */
+		if (bytes2SkipLeft > 0) {
+			long skipped = roughSkip(bytes2SkipLeft);
+//			System.out.printf("Quick skip of %d of %d bytes to chunk %d\n", skipped, bytes2SkipLeft, count);
+			bytes2SkipLeft -= skipped;
+		}
+
+
+		byte[] data;
 
 		int nHead = sudMap.chunkHeaderMap.size();
 		while (count < nHead) {
@@ -543,7 +545,6 @@ public class SudAudioInputStream extends AudioInputStream {
 
 				if (chunkHeader.checkId()) {
 
-					byte[] data = new byte[chunkHeader.DataLength];
 
 					if (isChunkIDWav(chunkHeader.ChunkId)) {
 						// how many samples are in this chunk
@@ -552,6 +553,7 @@ public class SudAudioInputStream extends AudioInputStream {
 
 						if (bytes2SkipLeft < bytesInChunk) {
 
+							data = new byte[chunkHeader.DataLength];
 							sudFileExpander.getSudInputStream().readFully(data);
 							int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
 							if (dataCRC != chunkHeader.DataCrc) {
@@ -584,7 +586,7 @@ public class SudAudioInputStream extends AudioInputStream {
 							sudPrint("Skip the chunk: ");
 
 							// skip the compressed data here
-							sudFileExpander.getSudInputStream().skip(data.length);
+							sudFileExpander.getSudInputStream().skip(chunkHeader.DataLength);
 
 							// we have, however, skipped far more raw audio bytes than compressed data.
 							bytes2SkipLeft = bytes2SkipLeft - bytesInChunk;
@@ -599,13 +601,19 @@ public class SudAudioInputStream extends AudioInputStream {
 						// should be decompressed and saved to the file system.
 						//						if(sudFileExpander.getSudParams().saveMeta) {
 
-						sudFileExpander.getSudInputStream().readFully(data);
-						int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
-						if (dataCRC != chunkHeader.DataCrc) {
-							continue;
+						if (bytes2SkipLeft == 0) {
+							data = new byte[chunkHeader.DataLength];
+							sudFileExpander.getSudInputStream().readFully(data);
+							int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+							if (dataCRC != chunkHeader.DataCrc) {
+								continue;
+							}
+
+							sudFileExpander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
 						}
-						
-						sudFileExpander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
+						else {
+							sudFileExpander.getSudInputStream().skip(chunkHeader.DataLength);
+						}
 
 
 
@@ -635,457 +643,514 @@ public class SudAudioInputStream extends AudioInputStream {
 	}
 
 	/**
-	 * Obtains the audio format of the sound data in this audio input stream.
-	 *
-	 * @return an audio format object describing this stream's format
+	 * Do a rough skip of data to try to get closer to the actual frame number we want, without
+	 * having to do lots of little skips. 
+	 * @param n number of bytes of raw audio data to skip. 
+	 * @return number of audio bytes actually skipped (different to the number of actual bytes skipped). 
 	 */
-	public AudioFormat getFormat() {
-		return super.getFormat();
-	}
+	private long roughSkip(long audioBytes2Skip) {
 
-	/**
-	 * Obtains the length of the stream, expressed in sample frames rather than
-	 * bytes.
-	 *
-	 * @return the length in sample frames
-	 */
-	public long getFrameLength() {
-		return this.totalBytes/getFormat().getFrameSize();
-	}
-
-	/**
-	 * Reads the next byte of data from the audio input stream. The audio input
-	 * stream's frame size must be one byte, or an {@code IOException} will be
-	 * thrown.
-	 *
-	 * @return the next byte of data, or -1 if the end of the stream is reached
-	 * @throws IOException if an input or output error occurs
-	 * @see #read(byte[], int, int)
-	 * @see #read(byte[])
-	 * @see #available
-	 */
-	@Override
-	public int read() throws IOException {
-		if (audioBuffer == null) {
-			throw new EOFException("The audio buffer is null");
-		}
-		if ((readIndex) >= audioBuffer.length) {
-			nextChunk(0);
-		}
-		if (audioBuffer == null)
-			throw new EOFException("The audio buffer is null");
-		bytesRead++;
-		return audioBuffer[readIndex++];
-	}
-
-	/**
-	 * Reads some number of bytes from the audio input stream and stores them into
-	 * the buffer array {@code b}. The number of bytes actually read is returned as
-	 * an integer. This method blocks until input data is available, the end of the
-	 * stream is detected, or an exception is thrown.
-	 * <p>
-	 * This method will always read an integral number of frames. If the length of
-	 * the array is not an integral number of frames, a maximum of
-	 * {@code b.length - (b.length % frameSize)} bytes will be read.
-	 *
-	 * @param b the buffer into which the data is read
-	 * @return the total number of bytes read into the buffer, or -1 if there is no
-	 *         more data because the end of the stream has been reached
-	 * @throws IOException if an input or output error occurs
-	 * @see #read(byte[], int, int)
-	 * @see #read()
-	 * @see #available
-	 */
-	@Override
-	public int read(byte[] b) throws IOException {
-		return read(b, 0, b.length);
-	}
-
-	/**
-	 * Reads up to a specified maximum number of bytes of data from the audio
-	 * stream, putting them into the given byte array.
-	 * <p>
-	 * This method will always read an integral number of frames. If {@code len}
-	 * does not specify an integral number of frames, a maximum of
-	 * {@code len - (len % frameSize)} bytes will be read.
-	 *
-	 * @param b   the buffer into which the data is read
-	 * @param off the offset, from the beginning of array {@code b}, at which the
-	 *            data will be written
-	 * @param len the maximum number of bytes to read
-	 * @return the total number of bytes read into the buffer, or -1 if there is no
-	 *         more data because the end of the stream has been reached
-	 * @throws IOException if an input or output error occurs
-	 * @see #read(byte[])
-	 * @see #read()
-	 * @see #skip
-	 * @see #available
-	 */
-	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
-		int count = 0;
-		try {
-			for (int i = off; i < (len + off); i++) {
-				b[i] = (byte) this.read();
-				count++;
-			}
-		}
-		catch (EOFException e) {
-			// normal behaviour
-		}
-		return count;
-	}
-
-	/**
-	 * Skips over and discards a specified number of bytes from this audio input
-	 * stream.
-	 * <p>
-	 * This method will always skip an integral number of frames. If {@code n} does
-	 * not specify an integral number of frames, a maximum of
-	 * {@code n - (n % frameSize)} bytes will be skipped.
-	 *
-	 * @param n the requested number of bytes to be skipped
-	 * @return the actual number of bytes skipped
-	 * @throws IOException if an input or output error occurs
-	 * @see #read
-	 * @see #available
-	 */
-	@Override
-	public long skip(long n) throws IOException {
-
-		// make sure not to skip fractional frames
-		final long reminder = n % frameSize;
-		if (reminder != 0) {
-			n -= reminder;
-		}
-		if (n <= 0) {
+		ChunkHeader chunkHeader;
+		if (sudMap == null || sudMap.chunkHeaderMap == null) {
 			return 0;
 		}
+		int nHead = sudMap.chunkHeaderMap.size();
+		long totalToSkip = 0; // file bytes to skip
+		long audioSkipped = 0; // audio that was actually skipped. 
 
-		/**
-		 * Skipping is a little tricky because we don't want to decompress every X3
-		 * chunk on the way to getting to the right spot.
-		 */
-
-		//long time1 = System.currentTimeMillis();
-
-		/**
-		 * There are two options here; 1) There are enough samples in the buffer for a
-		 * skip 2) We need to go through chunks to get to the skipped data.
-		 */
-		int audioBufLeft = this.audioBuffer.length - readIndex;
-
-		if (n >= audioBufLeft) {
-			bytesRead = bytesRead + audioBufLeft;
-
-			// note that the next chunk function will update the samples read now
-			nextChunk((int) (n - audioBufLeft));
-		} else {
-			readIndex = (int) (readIndex + n);
-			bytesRead = (int) (bytesRead + n);
-		}
-
-		//long time2 = System.currentTimeMillis();
-
-		//System.out.println("Skip time...: " + (time2 - time1));
-
-		return -1;
-
-	}
-
-	/**
-	 * .sud files are a compressed data stream and therefore it is impossible to
-	 * know the exact number of samples.
-	 */
-	@Override
-	public int available() throws IOException {
-		return (int) (this.totalBytes - bytesRead);
-	}
-
-	/**
-	 * Closes this audio input stream and releases any system resources associated
-	 * with the stream.
-	 *
-	 * @throws IOException if an input or output error occurs
-	 */
-	@Override
-	public void close() throws IOException {
-		this.sudFileExpander.closeFileExpander();
-		sudFileExpander.getSudInputStream().close();
-	}
-
-	/**
-	 * Add a file listener to the sud file expander. 
-	 * @param sudFileListener - the file listener to add. 
-	 */
-	public void addSudFileListener(SudFileListener sudFileListener) {
-		sudFileExpander.addSudFileListener(sudFileListener);
-	}
-
-	/**
-	 * Remove a sud file listener. 
-	 * @param sudFileListener - the sudFileListener to remove.
-	 * @return true if the SudFileListener was removed. 
-	 */
-	public boolean removeSudFileListener(SudFileListener sudFileListener) {
-		return sudFileExpander.removeSudFileListener(sudFileListener);
-	}
-
-	/**
-	 * Marks the current position in this audio input stream.
-	 *
-	 * @param readlimit the maximum number of bytes that can be read before the mark
-	 *                  position becomes invalid
-	 * @see #reset
-	 * @see #markSupported
-	 */
-	@Override
-	public void mark(int readlimit) {
-		// do nothing.
-	}
-
-	/**
-	 * Mark is not supported in .sud files because we are decompressing data as we
-	 * go - going back would mean finding the position in compressed data which
-	 * would be very complicated - better to just start again.
-	 */
-	@Override
-	public boolean markSupported() {
-		return false;
-	}
-
-	/**
-	 * Repositions this audio input stream to the position it had at the time its
-	 * {@code mark} method was last invoked.
-	 *
-	 * @throws IOException if an input or output error occurs
-	 * @see #mark
-	 * @see #markSupported
-	 */
-	@Override
-	public void reset() throws IOException {
-
-	}
-
-	static AudioFormat.Encoding getEncoding(int formatCode) {
-		switch (formatCode) {
-		case 1:
-			return Encoding.PCM_SIGNED;
-		case 3:
-			return Encoding.PCM_FLOAT;
-		}
-		return null;
-	}
-
-	/**
-	 * Set to true to print information on the sud audio stream as it expands data.
-	 * 
-	 * @param verbose - true to set more verbose print statements.
-	 */
-	public void setVerbose(boolean verbose) {
-		this.verbose = verbose;
-	}
-
-	/**
-	 * Print a statement of verbose.
-	 * 
-	 * @param message - the message to print.
-	 */
-	private void sudPrint(String message) {
-		sudPrint(message, verbose);
-	}
-
-	/**
-	 * Print a statement of verbose.
-	 * 
-	 * @param message - the message to print.
-	 */
-	private static void sudPrint(String message, boolean verbose) {
-		if (verbose) {
-			System.out.println(message);
-		}
-	}
-
-	/**
-	 * Set the parameters for extracting the .sud file. This contains options such
-	 * as whether to zeroPad, where and if to save files etc.
-	 * 
-	 * @param the parameters class that holds settings.
-	 */
-	public void setSudParams(SudParams params) {
-		this.sudFileExpander.setSudParams(params);
-	}
-
-	/**
-	 * Get the parameters for extracting the .sud file. This contains options such
-	 * as whether to zeroPad, where and if to save files etc.
-	 * 
-	 * @return the parameters class that holds settings.
-	 */
-	public SudParams getSudParams() {
-		return this.sudFileExpander.getSudParams();
-	}
-
-	/**
-	 * Get the string name for the chunk ID. Note that a .sud file can have
-	 * different numbers and versions of data handlers and so the chunkID is not
-	 * unique between files. The chunk string is unique.
-	 * <p>
-	 * Note: this function call only be called after processChunk has been called.
-	 * 
-	 * @param chunkID
-	 * @return the string name of the handler associated with the chunkID or null if
-	 *         there is no handler associated with the chunkID. 
-	 */
-	public String getChunkIDString(int chunkID) {
-		return sudFileExpander.getChunkFileType(chunkID);
-	}
-
-	/**
-	 * Get the data handler instance for a chunkID 
-	 * @param chunkID - the ID of the chunk. 
-	 * @return the data handler instance to process the chunk. 
-	 */
-	public  IDSudar getChunkDataHandler(int chunkID) {
-		return sudFileExpander.getChunkDataHandler(chunkID); 
-	}
-
-	/**
-	 * Get the sud file map. This contains metadata about the file. 
-	 * @return the sud file map. 
-	 */
-	public SudFileMap getSudMap() {
-		checkDetectorInformation(this.sudMap);
-		return this.sudMap;
-	}
-
-
-	/**
-	 * Pull mor edetailed detector information out of the xml in the SUD file map
-	 * <p>The simple clickDetectorSampleRate field doesn't cut it. 
-	 * @param sudMap2
-	 */
-	private void checkDetectorInformation(SudFileMap sudMap) {
-		if (sudMap == null) {
-			return;
-		}
-		/**
-		 * There is a fair amount of non standard stuff in the ST XML and 
-		 * it won't easily parse into a document. Two things I've found so far
-		 * are getting rid of some 0 characters in the array and also the need
-		 * for XML documents to have a single root element. 
-		 * So code below replaces zeros with spaces and wraps it in a <ST> selement. 
-		 */
-		SUDXMLUtils sudXmlUtils = new SUDXMLUtils();
-		String xml = sudMap.xmlMetaData;
-		Document doc = null;
-		try {
-			doc = sudXmlUtils.createDocument(xml);
-		} catch (SUDFileException e) {
-			System.out.println(e.getMessage());
-		}
-		if (doc == null) {
-			try {
-				doc = sudXmlUtils.createDetectorDocument(xml);
-			}
-			catch (SUDFileException e) {
-			}
-		}
-		if (doc != null) {
-			SUDClickDetectorInfo detInfo = sudXmlUtils.extractDetectorInfo(doc);
-			sudMap.detectorInfo = detInfo;
-		}
-	}
-
-	/**
-	 * Test decompression on a file using a SudAudioInputStream. 
-	 * @param args - input args are null. 
-	 */
-	public static void main(String[] args) {
-
-		long time0 = System.currentTimeMillis();
-		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
-		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
-		//		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
-		String filePath = "C:\\ProjectData\\Morlais\\BadSud\\7124\\7124.221217233726.sud";
-		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
-		SudAudioInputStream sudAudioInputStream = null;
-		File file = new File(filePath);
-
-		File sudMapFileName = new File(file.getAbsoluteFile() + "x"); 
-		SudFileMap sudFileMap = null;
-		if (sudMapFileName.exists()) {
-			SudFileMap loadedFileMap ; 
-			try {
-				loadedFileMap = loadSudMap(sudMapFileName); 
-			}	
-			catch (Exception e) {
-				e.printStackTrace(); 
-				System.err.println("Could not open .sudx file map"); 
-				loadedFileMap = null; 
-			}
-
-			//			if (loadedFileMap == null || loadedFileMap.zeroPad!=params.zeroPad) {
-			//				sudFileMap = null; 
-			//			}
-			//			else
-			sudFileMap = loadedFileMap; 
-//			System.out.println(sudFileMap.xmlMetaData);
-		}
-		else {
-
-			SudParams sudParams = new SudParams(); 
-			//sudParams.saveFolder = "/Users/au671271/Desktop/sud_tests";
-			sudParams.saveWav = true; 
-
-			boolean verbose = false; // true to print more stuff.
-
+		while (count < nHead) {
 			try {
 
+				chunkHeader = sudMap.chunkHeaderMap.get(count); 
 
-				sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
-
-				long time1 = System.currentTimeMillis();
-
-				System.out.println("Time to create file map: " + (time1 - time0) + " sample rate: " + sudAudioInputStream.getFormat().getSampleRate() + " " + sudAudioInputStream.getSudMap().clickDetSampleRate);
-
-				System.out.println("sudAudioInputStream.available() 1: " + sudAudioInputStream.available());
-
-				sudAudioInputStream.skip(500000 * 0);
-
-				long time2 = System.currentTimeMillis();
-
-				System.out.println("Time to skip 1: " + (time2 - time1));
-
-
-				time1 = System.currentTimeMillis();
-
-				sudAudioInputStream.skip(500000 * 0);
-
-				time2 = System.currentTimeMillis();
-
-				System.out.println("Time to skip 2: " + (time2 - time1));
-
-				System.out.println("sudAudioInputStream.available() 2: " + sudAudioInputStream.available());
-
-				while (sudAudioInputStream.available() > 0) {
-					sudAudioInputStream.read();
+				if (chunkHeader.checkId() == false) {
+					continue;
 				}
 
-				sudAudioInputStream.close();
-
-			} catch (Exception e) {
-
-				e.printStackTrace();
+				int bytesInChunk = 0;
+				if (isChunkIDWav(chunkHeader.ChunkId)) {
+					// how many samples are in this chunk
+					bytesInChunk = (this.getFormat().getSampleSizeInBits() / 8) * nWavSamples(chunkHeader,
+							lastWavChunk, this.getFormat().getSampleRate(), sudFileExpander.getSudParams().zeroPad);
+					if (audioBytes2Skip - bytesInChunk < 0) {
+						/*
+						 * Getting close to where we want to be, so can stop at this point. 
+						 */					
+						break;
+					}	
+				}
+				audioSkipped += bytesInChunk;
+				audioBytes2Skip -= bytesInChunk;
+				totalToSkip += (chunkHeader.DataLength + ChunkHeader.NUM_BYTES);
+				count++;
 			}
-			long time3 = System.currentTimeMillis();
-
-			System.out.println("Total processing time: " + (time3 - time0));
-
-			System.out.println(sudAudioInputStream.getSudMap().xmlMetaData);
+			catch (Exception ex) {
+				count = 0;
+				return 0;
+			}
 		}
+		try {
+			sudFileExpander.getSudInputStream().skip(totalToSkip);
+			bytesRead += totalToSkip;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+			return audioSkipped;
+		}
+
+		/**
+		 * Obtains the audio format of the sound data in this audio input stream.
+		 *
+		 * @return an audio format object describing this stream's format
+		 */
+		public AudioFormat getFormat() {
+			return super.getFormat();
+		}
+
+		/**
+		 * Obtains the length of the stream, expressed in sample frames rather than
+		 * bytes.
+		 *
+		 * @return the length in sample frames
+		 */
+		public long getFrameLength() {
+			return this.totalBytes/getFormat().getFrameSize();
+		}
+
+		/**
+		 * Reads the next byte of data from the audio input stream. The audio input
+		 * stream's frame size must be one byte, or an {@code IOException} will be
+		 * thrown.
+		 *
+		 * @return the next byte of data, or -1 if the end of the stream is reached
+		 * @throws IOException if an input or output error occurs
+		 * @see #read(byte[], int, int)
+		 * @see #read(byte[])
+		 * @see #available
+		 */
+		@Override
+		public int read() throws IOException {
+			if (audioBuffer == null) {
+				throw new EOFException("The audio buffer is null");
+			}
+			if ((readIndex) >= audioBuffer.length) {
+				nextChunk(0);
+			}
+			if (audioBuffer == null)
+				throw new EOFException("The audio buffer is null");
+			bytesRead++;
+			return audioBuffer[readIndex++];
+		}
+
+		/**
+		 * Reads some number of bytes from the audio input stream and stores them into
+		 * the buffer array {@code b}. The number of bytes actually read is returned as
+		 * an integer. This method blocks until input data is available, the end of the
+		 * stream is detected, or an exception is thrown.
+		 * <p>
+		 * This method will always read an integral number of frames. If the length of
+		 * the array is not an integral number of frames, a maximum of
+		 * {@code b.length - (b.length % frameSize)} bytes will be read.
+		 *
+		 * @param b the buffer into which the data is read
+		 * @return the total number of bytes read into the buffer, or -1 if there is no
+		 *         more data because the end of the stream has been reached
+		 * @throws IOException if an input or output error occurs
+		 * @see #read(byte[], int, int)
+		 * @see #read()
+		 * @see #available
+		 */
+		@Override
+		public int read(byte[] b) throws IOException {
+			return read(b, 0, b.length);
+		}
+
+		/**
+		 * Reads up to a specified maximum number of bytes of data from the audio
+		 * stream, putting them into the given byte array.
+		 * <p>
+		 * This method will always read an integral number of frames. If {@code len}
+		 * does not specify an integral number of frames, a maximum of
+		 * {@code len - (len % frameSize)} bytes will be read.
+		 *
+		 * @param b   the buffer into which the data is read
+		 * @param off the offset, from the beginning of array {@code b}, at which the
+		 *            data will be written
+		 * @param len the maximum number of bytes to read
+		 * @return the total number of bytes read into the buffer, or -1 if there is no
+		 *         more data because the end of the stream has been reached
+		 * @throws IOException if an input or output error occurs
+		 * @see #read(byte[])
+		 * @see #read()
+		 * @see #skip
+		 * @see #available
+		 */
+		@Override
+		public int read(byte[] b, int off, int len) throws IOException {
+			int readCount = 0;
+			try {
+				for (int i = off; i < (len + off); i++) {
+					b[i] = (byte) this.read();
+					readCount++;
+				}
+			}
+			catch (EOFException e) {
+				// normal behaviour
+			}
+			return readCount;
+		}
+
+		/**
+		 * Skips over and discards a specified number of bytes from this audio input
+		 * stream.
+		 * <p>
+		 * This method will always skip an integral number of frames. If {@code n} does
+		 * not specify an integral number of frames, a maximum of
+		 * {@code n - (n % frameSize)} bytes will be skipped.
+		 *
+		 * @param n the requested number of bytes to be skipped
+		 * @return the actual number of bytes skipped
+		 * @throws IOException if an input or output error occurs
+		 * @see #read
+		 * @see #available
+		 */
+		@Override
+		public long skip(long n) throws IOException {
+
+			// make sure not to skip fractional frames
+			final long reminder = n % frameSize;
+			if (reminder != 0) {
+				n -= reminder;
+			}
+			if (n <= 0) {
+				return 0;
+			}
+
+			/**
+			 * Skipping is a little tricky because we don't want to decompress every X3
+			 * chunk on the way to getting to the right spot.
+			 */
+
+			//long time1 = System.currentTimeMillis();
+			/**
+			 * There are two options here; 1) There are enough samples in the buffer for a
+			 * skip 2) We need to go through chunks to get to the skipped data.
+			 */
+			int audioBufLeft = this.audioBuffer.length - readIndex;
+
+			if (n >= audioBufLeft) {
+				bytesRead = bytesRead + audioBufLeft;
+
+				// note that the next chunk function will update the samples read now
+				nextChunk((int) (n - audioBufLeft));
+			} else {
+				readIndex = (int) (readIndex + n);
+				bytesRead = (int) (bytesRead + n);
+			}
+
+			//long time2 = System.currentTimeMillis();
+
+			//System.out.println("Skip time...: " + (time2 - time1));
+
+			return -1;
+
+		}
+
+		/**
+		 * .sud files are a compressed data stream and therefore it is impossible to
+		 * know the exact number of samples.
+		 */
+		@Override
+		public int available() throws IOException {
+			return (int) (this.totalBytes - bytesRead);
+		}
+
+		/**
+		 * Closes this audio input stream and releases any system resources associated
+		 * with the stream.
+		 *
+		 * @throws IOException if an input or output error occurs
+		 */
+		@Override
+		public void close() throws IOException {
+			this.sudFileExpander.closeFileExpander();
+			sudFileExpander.getSudInputStream().close();
+		}
+
+		/**
+		 * Add a file listener to the sud file expander. 
+		 * @param sudFileListener - the file listener to add. 
+		 */
+		public void addSudFileListener(SudFileListener sudFileListener) {
+			sudFileExpander.addSudFileListener(sudFileListener);
+		}
+
+		/**
+		 * Remove a sud file listener. 
+		 * @param sudFileListener - the sudFileListener to remove.
+		 * @return true if the SudFileListener was removed. 
+		 */
+		public boolean removeSudFileListener(SudFileListener sudFileListener) {
+			return sudFileExpander.removeSudFileListener(sudFileListener);
+		}
+
+		/**
+		 * Marks the current position in this audio input stream.
+		 *
+		 * @param readlimit the maximum number of bytes that can be read before the mark
+		 *                  position becomes invalid
+		 * @see #reset
+		 * @see #markSupported
+		 */
+		@Override
+		public void mark(int readlimit) {
+			// do nothing.
+		}
+
+		/**
+		 * Mark is not supported in .sud files because we are decompressing data as we
+		 * go - going back would mean finding the position in compressed data which
+		 * would be very complicated - better to just start again.
+		 */
+		@Override
+		public boolean markSupported() {
+			return false;
+		}
+
+		/**
+		 * Repositions this audio input stream to the position it had at the time its
+		 * {@code mark} method was last invoked.
+		 *
+		 * @throws IOException if an input or output error occurs
+		 * @see #mark
+		 * @see #markSupported
+		 */
+		@Override
+		public void reset() throws IOException {
+
+		}
+
+		static AudioFormat.Encoding getEncoding(int formatCode) {
+			switch (formatCode) {
+			case 1:
+				return Encoding.PCM_SIGNED;
+			case 3:
+				return Encoding.PCM_FLOAT;
+			}
+			return null;
+		}
+
+		/**
+		 * Set to true to print information on the sud audio stream as it expands data.
+		 * 
+		 * @param verbose - true to set more verbose print statements.
+		 */
+		public void setVerbose(boolean verbose) {
+			this.verbose = verbose;
+		}
+
+		/**
+		 * Print a statement of verbose.
+		 * 
+		 * @param message - the message to print.
+		 */
+		private void sudPrint(String message) {
+			sudPrint(message, verbose);
+		}
+
+		/**
+		 * Print a statement of verbose.
+		 * 
+		 * @param message - the message to print.
+		 */
+		private static void sudPrint(String message, boolean verbose) {
+			if (verbose) {
+				System.out.println(message);
+			}
+		}
+
+		/**
+		 * Set the parameters for extracting the .sud file. This contains options such
+		 * as whether to zeroPad, where and if to save files etc.
+		 * 
+		 * @param the parameters class that holds settings.
+		 */
+		public void setSudParams(SudParams params) {
+			this.sudFileExpander.setSudParams(params);
+		}
+
+		/**
+		 * Get the parameters for extracting the .sud file. This contains options such
+		 * as whether to zeroPad, where and if to save files etc.
+		 * 
+		 * @return the parameters class that holds settings.
+		 */
+		public SudParams getSudParams() {
+			return this.sudFileExpander.getSudParams();
+		}
+
+		/**
+		 * Get the string name for the chunk ID. Note that a .sud file can have
+		 * different numbers and versions of data handlers and so the chunkID is not
+		 * unique between files. The chunk string is unique.
+		 * <p>
+		 * Note: this function call only be called after processChunk has been called.
+		 * 
+		 * @param chunkID
+		 * @return the string name of the handler associated with the chunkID or null if
+		 *         there is no handler associated with the chunkID. 
+		 */
+		public String getChunkIDString(int chunkID) {
+			return sudFileExpander.getChunkFileType(chunkID);
+		}
+
+		/**
+		 * Get the data handler instance for a chunkID 
+		 * @param chunkID - the ID of the chunk. 
+		 * @return the data handler instance to process the chunk. 
+		 */
+		public  IDSudar getChunkDataHandler(int chunkID) {
+			return sudFileExpander.getChunkDataHandler(chunkID); 
+		}
+
+		/**
+		 * Get the sud file map. This contains metadata about the file. 
+		 * @return the sud file map. 
+		 */
+		public SudFileMap getSudMap() {
+			checkDetectorInformation(this.sudMap);
+			return this.sudMap;
+		}
+
+
+		/**
+		 * Pull mor edetailed detector information out of the xml in the SUD file map
+		 * <p>The simple clickDetectorSampleRate field doesn't cut it. 
+		 * @param sudMap2
+		 */
+		private void checkDetectorInformation(SudFileMap sudMap) {
+			if (sudMap == null) {
+				return;
+			}
+			/**
+			 * There is a fair amount of non standard stuff in the ST XML and 
+			 * it won't easily parse into a document. Two things I've found so far
+			 * are getting rid of some 0 characters in the array and also the need
+			 * for XML documents to have a single root element. 
+			 * So code below replaces zeros with spaces and wraps it in a <ST> selement. 
+			 */
+			SUDXMLUtils sudXmlUtils = new SUDXMLUtils();
+			String xml = sudMap.xmlMetaData;
+			Document doc = null;
+			try {
+				doc = sudXmlUtils.createDocument(xml);
+			} catch (SUDFileException e) {
+				System.out.println(e.getMessage());
+			}
+			if (doc == null) {
+				try {
+					doc = sudXmlUtils.createDetectorDocument(xml);
+				}
+				catch (SUDFileException e) {
+				}
+			}
+			if (doc != null) {
+				SUDClickDetectorInfo detInfo = sudXmlUtils.extractDetectorInfo(doc);
+				sudMap.detectorInfo = detInfo;
+			}
+		}
+
+		/**
+		 * Test decompression on a file using a SudAudioInputStream. 
+		 * @param args - input args are null. 
+		 */
+		public static void main(String[] args) {
+
+			long time0 = System.currentTimeMillis();
+			//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
+			//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
+			//		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
+			String filePath = "C:\\ProjectData\\Morlais\\BadSud\\7124\\7124.221217233726.sud";
+			//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
+			SudAudioInputStream sudAudioInputStream = null;
+			File file = new File(filePath);
+
+			File sudMapFileName = new File(file.getAbsoluteFile() + "x"); 
+			SudFileMap sudFileMap = null;
+			if (sudMapFileName.exists()) {
+				SudFileMap loadedFileMap ; 
+				try {
+					loadedFileMap = loadSudMap(sudMapFileName); 
+				}	
+				catch (Exception e) {
+					e.printStackTrace(); 
+					System.err.println("Could not open .sudx file map"); 
+					loadedFileMap = null; 
+				}
+
+				//			if (loadedFileMap == null || loadedFileMap.zeroPad!=params.zeroPad) {
+				//				sudFileMap = null; 
+				//			}
+				//			else
+				sudFileMap = loadedFileMap; 
+				//			System.out.println(sudFileMap.xmlMetaData);
+			}
+			else {
+
+				SudParams sudParams = new SudParams(); 
+				//sudParams.saveFolder = "/Users/au671271/Desktop/sud_tests";
+				sudParams.saveWav = true; 
+
+				boolean verbose = false; // true to print more stuff.
+
+				try {
+
+
+					sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
+
+					long time1 = System.currentTimeMillis();
+
+					System.out.println("Time to create file map: " + (time1 - time0) + " sample rate: " + sudAudioInputStream.getFormat().getSampleRate() + " " + sudAudioInputStream.getSudMap().clickDetSampleRate);
+
+					System.out.println("sudAudioInputStream.available() 1: " + sudAudioInputStream.available());
+
+					sudAudioInputStream.skip(500000 * 0);
+
+					long time2 = System.currentTimeMillis();
+
+					System.out.println("Time to skip 1: " + (time2 - time1));
+
+
+					time1 = System.currentTimeMillis();
+
+					sudAudioInputStream.skip(500000 * 0);
+
+					time2 = System.currentTimeMillis();
+
+					System.out.println("Time to skip 2: " + (time2 - time1));
+
+					System.out.println("sudAudioInputStream.available() 2: " + sudAudioInputStream.available());
+
+					while (sudAudioInputStream.available() > 0) {
+						sudAudioInputStream.read();
+					}
+
+					sudAudioInputStream.close();
+
+				} catch (Exception e) {
+
+					e.printStackTrace();
+				}
+				long time3 = System.currentTimeMillis();
+
+				System.out.println("Total processing time: " + (time3 - time0));
+
+				System.out.println(sudAudioInputStream.getSudMap().xmlMetaData);
+			}
+		}
+
+
+
 	}
-
-
-
-}
