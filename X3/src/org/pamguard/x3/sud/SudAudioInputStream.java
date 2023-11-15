@@ -639,8 +639,6 @@ public class SudAudioInputStream extends AudioInputStream {
 			}
 
 		}
-
-
 	}
 
 	/**
@@ -1062,6 +1060,56 @@ public class SudAudioInputStream extends AudioInputStream {
 			sudMap.detectorInfo = detInfo;
 		}
 	}
+	
+	/**
+	 * Open a sud input stream. and grab the first microsecond time from the first audio chunk. This does 
+	 * NOT create a file map. 
+	 * @param - the file to extract time from. 
+	 */              
+	public static long quickFileTime(File file) throws Exception {
+		SudFileExpander expander = new SudFileExpander(file); 
+		expander.getSudParams().setFileSave(false, false, false, false);
+		expander.openSudFile(file);
+
+		SudDataInputStream inputStream = expander.getSudInputStream(); 
+		ChunkHeader chunkHeader;
+		long timeMicros = -1; 
+		int count = 0; 
+		while(true){
+			try {
+				chunkHeader = ChunkHeader.deSerialise(inputStream);
+				
+				byte[] data = new byte[chunkHeader.DataLength];
+				inputStream.readFully(data);
+								
+				//check the crc to make sure data is intact
+				int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
+				if (crc != chunkHeader.DataCrc) {
+					System.out.println("Bad data CRC");
+					continue;
+				}
+				
+//				System.out.println(expander.getChunkFileType(chunkHeader.ChunkId));
+				
+				//is this an audio chunk and, if so, what is the time?
+				if (expander.getChunkFileType(chunkHeader.ChunkId)!=null && expander.getChunkFileType(chunkHeader.ChunkId).equals(ISudarDataHandler.WAV_FTYPE)) {
+					timeMicros = chunkHeader.getMicrosecondTime(); 
+					break; 
+				}
+				
+				expander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
+
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		inputStream.close();
+		expander.closeFileExpander();
+
+		return timeMicros; 
+	}
 
 	/**
 	 * Test decompression on a file using a SudAudioInputStream. 
@@ -1073,7 +1121,6 @@ public class SudAudioInputStream extends AudioInputStream {
 		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
 		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
 		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
-
 
 		//			String filePath = "C:\\ProjectData\\Morlais\\BadSud\\7124\\7124.221217233726.sud";
 		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";

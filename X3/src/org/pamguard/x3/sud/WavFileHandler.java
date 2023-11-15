@@ -129,7 +129,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.sudParams = sudParams.clone();
 
 		this.fileName = sudParams.getOutFilePath();
-//		//this.saveWav = sudParams.saveWav;
+//		this.saveWav = sudParams.
 		this.saveMeta = sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX);
 //
 //		this.zeroFill = sudParams.zeroPad;
@@ -355,7 +355,6 @@ public class WavFileHandler implements ISudarDataHandler {
 		AudioFormat audioFormat = new AudioFormat(fs, 16,nChan, true, false);
 		
 		//should or should we not save the wav file?
-		//todo
 		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
 		
 //		System.out.println("SAVE WAV FILES: " + saveWav); 
