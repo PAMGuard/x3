@@ -45,7 +45,7 @@ public class SudParams implements Cloneable {
 //	
 
 	/**
-	 * Contains a hashmap of all the file types (a key with the data hanlder type and file suffix) that
+	 * Contains a hashmap of all the file types (a key with the data handler type and file suffix) that
 	 * should be saved. A file will be save if the map returns true OR null. i.e. if
 	 * this contains no data all filetypes will be saved. Note that disabling a file
 	 * save does not disable it from processing - listeners etc. will all still be
