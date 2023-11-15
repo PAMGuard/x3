@@ -50,8 +50,10 @@ public class X3Handler implements ISudarDataHandler {
 	private String ftype; 
 
 
-	public X3Handler(SudParams filePath, String ftype) {
+	public X3Handler(SudParams sudParams, String ftype) {
 		x3FrameDecode = new X3FrameDecode(); 
+//		System.out.println("Process X3 file: " + ftype);
+
 		this.ftype = ftype; 
 	}
 
@@ -63,15 +65,12 @@ public class X3Handler implements ISudarDataHandler {
 	 */
 	public void processChunk(Chunk sudChunk) {
 		
-	
-		
 		byte[] buf = sudChunk.buffer;
 		ChunkHeader ch = sudChunk.chunkHeader;
 		
 		//System.out.println("Process X3 file: " + buf.length);
-
 		
-		//System.out.println("Process X3 chunk START: " + buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
+		//System.out.println("Process X3 chunk START: " +  buf.length + " first byte: " + Byte.toUnsignedInt(buf[0]) + " samples: " + ch.SampleCount);
 	
 		
 		//set the relevent data for the X3 header
@@ -147,7 +146,7 @@ public class X3Handler implements ISudarDataHandler {
 //		System.out.println("Process X3 chunk: " + nChan);
 		//short[] wavData = x3FrameDecode.unpackX3Frame(x3Head, buf, 0, null,  blockLength); 
 		
-		//System.out.println("Process X3 chunk END: " + buf.length + "  " + ch.SampleCount);
+		//System.out.println("Process X3 chunk END: " + sudChunk.buffer.length + "  " + ch.SampleCount);
 
 	}
 
@@ -312,6 +311,7 @@ public class X3Handler implements ISudarDataHandler {
 		
 		this.chunkIds = new int[]{id};
 		
+//		System.out.println(innerXml); 
 
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
@@ -380,6 +380,11 @@ public class X3Handler implements ISudarDataHandler {
 	@Override
 	public String getHandlerType() {
 		return ftype;
+	}
+	
+	@Override
+	public String getFileType() {
+		return null;
 	}
 
 

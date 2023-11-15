@@ -51,7 +51,8 @@ public class ChunkHeader implements Serializable {
 		header.ChunkId = di.readUnsignedShort();
 		header.DataLength = di.readUnsignedShort();
 		header.SampleCount = di.readUnsignedShort(); 
-		header.TimeS = di.readInt();
+		
+		header.TimeS = di.readInt();//the unix time of the chunk. 
 		header.TimeOffsetUs = di.readInt();
 		header.DataCrc = di.readUnsignedShort();
 		header.HeaderCrc = di.readUnsignedShort();

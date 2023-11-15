@@ -47,6 +47,11 @@ public class TxtFileHandler implements ISudarDataHandler {
 	private boolean saveMeta;
 
 	private FileWriter sw;
+	
+	/**
+	 * Reference to the sud params. 
+	 */
+	private SudParams sudParams;
 
 	public TxtFileHandler(String filePath) {
 		this.sudFile = new File(filePath);
@@ -57,7 +62,7 @@ public class TxtFileHandler implements ISudarDataHandler {
 		this.sudFile = new File(filePath.getSudFilePath());
 		this.fileName =filePath.getOutFilePath();
 		this.ftype=ftype; 
-		this.saveMeta = filePath.saveMeta;
+		this.sudParams= filePath; 
 	}
 	
 
@@ -147,8 +152,6 @@ public class TxtFileHandler implements ISudarDataHandler {
 	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.chunkIds = new int[]{id};
 		
-		this.chunkIds = new int[]{id};
-
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
@@ -156,7 +159,10 @@ public class TxtFileHandler implements ISudarDataHandler {
 		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"SUFFIX"},  nodeList);
 
 		fileSuffix = nodeContent.get("SUFFIX");
+		
+		this.saveMeta = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.TXT_FTYPE, fileSuffix));
 
+		
 	}
 
 	@Override
@@ -167,6 +173,11 @@ public class TxtFileHandler implements ISudarDataHandler {
 	@Override
 	public String getHandlerType() {
 		return ftype;
+	}
+
+	@Override
+	public String getFileType() {
+		return fileSuffix;
 	}
 
 

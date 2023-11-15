@@ -1,6 +1,9 @@
-package org.pamguard.x3.sud;
+package org.pamguard.x3.sud.test;
 
 import java.io.File;
+
+import org.pamguard.x3.sud.SudAudioInputStream;
+import org.pamguard.x3.sud.SudParams;
 
 
 /**
@@ -21,7 +24,7 @@ public class SudarListenerTest {
 		
 		SudParams sudParams = new SudParams(); 
 		sudParams.saveFolder = null;
-		sudParams.saveWav = true; 
+		sudParams.setSaveWav(true);
 
 		boolean verbose = false; // true to print more stuff.
 		

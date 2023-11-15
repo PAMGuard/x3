@@ -15,14 +15,13 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
-import org.apache.commons.io.FilenameUtils;
 import org.pamguard.x3.utils.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 
 /**
- * Write wav files from the X3 data (or umcompressed data blocks in the SUD files). 
+ * Write wav files from the X3 data (or uncompressed data blocks in the SUD files). 
  * 
  * @author Jamie Macaulay
  *
@@ -60,7 +59,6 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private PipedOutputStream pipedOutputStream;
 
-
 	private AudioInputStream audioInputStream;
 
 	private Thread writeThread;
@@ -85,7 +83,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	private Chunk firstChunk;
 
-	private boolean zeroFill = true; 
+//	private boolean zeroFill = true; 
 
 	private LogFileStream logFile;
 
@@ -97,35 +95,57 @@ public class WavFileHandler implements ISudarDataHandler {
 	private Integer nBits; 
 
 	/**
+	 * The bit shift. Data decompressed in the X3 is always 2+ bytes. But, the ADC
+	 * that saved them may not be a 16 bit ADC. It could for example be a 12 bit
+	 * ADC. In this case there is not point in bit shifting to 16 bits because X3
+	 * compression will be less effective.
+	 */
+	private Integer bitShift;
+
+
+	/**
 	 * True to save the wav files. 
 	 */
 	private boolean saveWav = true;
 
+	/**
+	 * True to save matadata in xml files. 
+	 */
 	private boolean saveMeta;
+
+	/**
+	 * The sud parameters.
+	 */
+	private SudParams sudParams;
 
 
 	//the difference between the sample count and the device's on board clock before a correction is made
 	public static double timeErrorWarningThreshold = 0.04; //%
 
 
-	public WavFileHandler(SudParams filePath, String ftype) {
-		this.sudFile = new File(filePath.getSudFilePath());
+	public WavFileHandler(SudParams sudParams, String ftype) {
+		this.sudFile = new File(sudParams.getSudFilePath());
+		
+		this.sudParams = sudParams.clone();
 
-		this.fileName = filePath.getOutFilePath();
-		this.saveWav = filePath.saveWav;
-		this.saveMeta = filePath.saveMeta;
-
-		this.zeroFill = filePath.zeroPad;
+		this.fileName = sudParams.getOutFilePath();
+//		//this.saveWav = sudParams.saveWav;
+		this.saveMeta = sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX);
+//
+//		this.zeroFill = sudParams.zeroPad;
 
 		this.ftype=ftype; 
 	}
 
 	int count=0;
 
+	private boolean saveDWV;
+
+
 	@Override
 	public void processChunk(Chunk sudChunk) {
-
-		//System.out.println("Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0]);
+		
+		//System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
 
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
@@ -166,8 +186,10 @@ public class WavFileHandler implements ISudarDataHandler {
 					if (error > 0) {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
-							if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
-							if (zeroFill) {
+							if (saveMeta) {
+								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+							}
+							if (sudParams.zeroPad) {
 
 								//System.out.println("Error: " + error + " " + nChan ); 
 								int samplesToAdd = (int)(error * (fs / 1000000));
@@ -179,7 +201,9 @@ public class WavFileHandler implements ISudarDataHandler {
 								//fsWavOut.Write(fill, 0, fill.Length);
 								error = 0;
 								cumulativeSamples += samplesToAdd;
-								if (saveMeta) logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								if (saveMeta) {
+									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+								}
 							}
 						}
 					} 
@@ -196,7 +220,7 @@ public class WavFileHandler implements ISudarDataHandler {
 			//System.out.println("Write wav: " + ++count + " " + sudChunk.chunkHeader.HeaderCrc );
 
 			if (saveWav) {
-				pipedOutputStream.write(sudChunk.buffer);
+				pipedOutputStream.write(bitShiftChunk(sudChunk.buffer));
 			}
 			lastChunk = sudChunk;
 
@@ -207,6 +231,26 @@ public class WavFileHandler implements ISudarDataHandler {
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * But shift the chunk data. The data may be bit <16 bit but is represented by
+	 * two bytes. The bitShift variable indicates if this is the case. Data has to
+	 * be shifted back so it takes up the full bit size of the audio file.
+	 * 
+	 * @param buffer - the input buffer
+	 * @return bit shifted buffer.
+	 */
+	private byte[] bitShiftChunk(byte[] buffer) {
+		if (this.bitShift==null) {
+			return buffer;
+		}
+		else {
+			//TODO
+			//need to bit shift all the bytes.
+			return buffer;
+
+		}
 	}
 
 	public String getFileSuffix() {
@@ -277,15 +321,17 @@ public class WavFileHandler implements ISudarDataHandler {
 	public void init(LogFileStream inputStream, String innerXml, int id) {
 		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
+		
+		//System.out.println(innerXml); 
 
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
 
 		NodeList nodeList = doc.getElementsByTagName("CFG");
 
-		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS"},  nodeList);
-		//		for (int i=0; i<nodeContent.size(); i++) {
-		//			System.out.println(nodeContent.values().toArray()[i]);
-		//		}
+		HashMap<String, String> nodeContent = XMLUtils.getInnerNodeContent(new String[] {"FS", "SUFFIX", "TIMECHK", "CHANNEL", "NCHS", "NBITS", "BITSHIFT"},  nodeList);
+//				for (int i=0; i<nodeContent.size(); i++) {
+//					System.out.println(nodeContent.values().toArray()[i]);
+//				}
 
 		channel = -1;
 		nChan = 1;
@@ -297,14 +343,22 @@ public class WavFileHandler implements ISudarDataHandler {
 		fs = Integer.valueOf(nodeContent.get("FS"));
 		fileSuffix = nodeContent.get("SUFFIX");
 
+	
 		nBits = Integer.valueOf(nodeContent.get("NBITS"));
-
+				
+		if (nodeContent.get("BITSHIFT")!=null) bitShift = Integer.valueOf(nodeContent.get("BITSHIFT"));
 		if (nodeContent.get("TIMECHK")!=null) timeCheck = Integer.valueOf(nodeContent.get("TIMECHK"));
 		if (nodeContent.get("CHANNEL")!=null) channel = Integer.valueOf(nodeContent.get("CHANNEL"));
 		nChan = Integer.valueOf(nodeContent.get("NCHS"));
 
 		//create the audio format. 
 		AudioFormat audioFormat = new AudioFormat(fs, 16,nChan, true, false);
+		
+		//should or should we not save the wav file?
+		//todo
+		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
+		
+//		System.out.println("SAVE WAV FILES: " + saveWav); 
 
 		if (saveWav) {
 			///create the wav writer
@@ -320,6 +374,14 @@ public class WavFileHandler implements ISudarDataHandler {
 				Ex.printStackTrace();
 			}
 		}
+	}
+
+	public boolean isDwv(String fileSuffix2) {
+		return fileSuffix2.toLowerCase().equals("dwv");
+	}
+
+	public boolean isWav(String fileSuffix2) {
+		return fileSuffix2.toLowerCase().equals("wav");
 	}
 
 	@Override
@@ -403,6 +465,9 @@ public class WavFileHandler implements ISudarDataHandler {
 	//		}
 	//
 	//	}
-
+	@Override
+	public String getFileType() {
+		return fileSuffix;
+	}
 
 }

@@ -20,6 +20,8 @@ import org.pamguard.x3.utils.XMLUtils;
  */
 public class CsvFileHandler implements ISudarDataHandler {
 
+	private static final String CSV_FILE_SUFFIX = "csv";
+
 	/**
 	 * Chunk IDs. 
 	 */
@@ -52,7 +54,8 @@ public class CsvFileHandler implements ISudarDataHandler {
 		this.sudFile = new File(filePath.getSudFilePath());
 		this.fileName =filePath.getOutFilePath();
 		this.ftype=ftype; 
-		this.saveMeta = filePath.saveMeta;
+		this.saveMeta=filePath.isFileSave(ISudarDataHandler.CSV_FTYPE, CSV_FILE_SUFFIX); 
+
 	}
 
 	@Override
@@ -75,6 +78,7 @@ public class CsvFileHandler implements ISudarDataHandler {
 
 	}
 
+	@Override
 	public String getFileType() {
 		return fileSuffix;
 	}
@@ -116,6 +120,7 @@ public class CsvFileHandler implements ISudarDataHandler {
 	public String getHandlerType() {
 		return ftype;
 	}
+	
 
 
 }

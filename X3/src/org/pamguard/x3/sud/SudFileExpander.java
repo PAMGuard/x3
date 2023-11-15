@@ -81,13 +81,12 @@ public class SudFileExpander {
 		//TODO - add out folder. 
 		String logFileName = (sudParams.getOutFilePath() + ".log.xml");
 
-		if (sudParams.saveMeta) {
+		if (sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX)) {
 			logFile = new LogFileStream(logFileName);
 		}
 
 		xmlHandler.init(logFile, "", XML_CHUNK_ID);
 		
-
 		dataHandlers.put(0, new IDSudar(xmlHandler)); 
 		
 		return sudHeader; 
@@ -101,6 +100,7 @@ public class SudFileExpander {
 
 		return openSudFile(bufinput); 
 	}
+	
 
 	/**
 	 * Process a single .sud file. This will process the entire file. 
@@ -124,23 +124,31 @@ public class SudFileExpander {
 					//				System.out.println(chunkHeader.toHeaderString());
 					count++;
 					if (sudParams.isVerbose()) {
-						System.out.println(count + ": Read chunk2 data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
+						System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
 					}
 
 					byte[] data = new byte[chunkHeader.DataLength];
 					bufinput.readFully(data);
 //					byte[] data = bufinput.readNBytes(chunkHeader.DataLength); 
+					
+					//check the crc to make sure data is intact
 					int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
 					if (crc != chunkHeader.DataCrc) {
 						System.out.println("Bad data CRC");
 						continue;
 					}
-
-
-					//process the chunk
-					if (chunkHeader.ChunkId == 0) {
-						System.out.printf("Chunk id 0 ");
+					
+					//create a key for the data handler
+					ISudarKey key = getIDSudarKey(chunkHeader.ChunkId);
+					Boolean enable = sudParams.fileSuffixDisable.get(key);
+					if (enable!=null && enable==false) {
+						continue;
 					}
+
+//					//process the chunk
+//					if (chunkHeader.ChunkId == 0) {
+//						System.out.printf("Chunk id 0 ");
+//					}
 					processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
 					
 					
@@ -160,6 +168,17 @@ public class SudFileExpander {
 		
 		//close everything. 
 		closeFileExpander();
+	}
+	
+	
+	/**
+	 * Get a key associated with the chunkID
+	 * @param chunkID - the chunk ID
+	 * @return the key for the data handler. 
+	 */
+	public ISudarKey getIDSudarKey(int chunkID) {
+		return new ISudarKey(dataHandlers.get(chunkID).dataHandler.getHandlerType(),
+				dataHandlers.get(chunkID).dataHandler.getFileType()); 
 	}
 	
 	
@@ -218,6 +237,7 @@ public class SudFileExpander {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	/**
 	 * Check whether a chunk ID is an uncompressed chunk of wav data from CONTINUOUS

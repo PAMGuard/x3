@@ -24,6 +24,8 @@ import org.xml.sax.InputSource;
  */
 public class XMLFileHandler implements ISudarDataHandler  {
 	
+	public static String XML_FILE_SUFFIX = "xml"; 
+	
 	private int[] chunkIds;
 	
 	/**
@@ -55,9 +57,8 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 	public XMLFileHandler(SudParams sudParams, HashMap<Integer, IDSudar> dataHandlers) {
 		this.dataHandlers = dataHandlers;
-		this.saveMeta=sudParams.saveMeta;
 		this.sudarParams=sudParams;
-
+		this.saveMeta=sudParams.isFileSave(new ISudarKey(ISudarDataHandler.XML_FTYPE, XML_FILE_SUFFIX)); 
 	}
 
 	@Override
@@ -77,7 +78,7 @@ public class XMLFileHandler implements ISudarDataHandler  {
 //
 //			System.out.println("XML Arrive length " + subChunk.buffer.length);
 //		}
-//		System.out.println(xml);
+		//System.out.println(xml);
 		
 		//save to the log file. 
 		if (this.saveMeta) {
@@ -238,6 +239,11 @@ public class XMLFileHandler implements ISudarDataHandler  {
 
 	@Override
 	public String getHandlerType() {
+		return ftype;
+	}
+	
+	@Override
+	public String getFileType() {
 		return ftype;
 	}
 
