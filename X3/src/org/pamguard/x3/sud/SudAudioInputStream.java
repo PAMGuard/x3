@@ -8,16 +8,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioFormat.Encoding;
 
 import org.pamguard.x3.x3.CRC16;
+import org.w3c.dom.Document;
+
+import javax.sound.sampled.AudioFormat.Encoding;
 
 /**
  * Opens a .sud file as an AudioinputStream.
@@ -62,15 +63,16 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	private int bytesRead = 0;
 
-//	/**
-//	 * The total samples in the file.
-//	 */
+	//	/**
+	//	 * The total samples in the file.
+	//	 */
 	private long totalBytes = 0;
 
 	/**
 	 * The sud file map. 
 	 */
 	private SudFileMap sudMap;
+
 
 	/**
 	 * Create an audio  stream for a sud file. 
@@ -98,9 +100,9 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * The {@code InputStream} from which this {@code AudioInputStream} object was
 	 * constructed.
 	 */
-	private InputStream stream;
-
-	private Chunk currentAudioChunk;
+	//	private InputStream stream;
+	//
+	//	private Chunk currentAudioChunk;
 
 	private int count = 0;
 
@@ -124,7 +126,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	public static SudAudioInputStream openInputStream(File file) throws Exception {
 		return openInputStream(file, false);
 	}
-	
+
 	/**
 	 * Open a sud input stream.
 	 * <p>
@@ -142,7 +144,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		return openInputStream(file, new SudParams(), null, false);
 	}
 	
-
+	
 	/**
 	 * Open a sud input stream.
 	 * <p>
@@ -162,59 +164,6 @@ public class SudAudioInputStream extends AudioInputStream {
 	}
 	
 	
-	
-	/**
-	 * Open a sud input stream. and grab the first microsecond time from the first audio chunk. This does 
-	 * NOT create a file map. 
-	 * @param - the file to extract time from. 
-	 */              
-	public static long quickFileTime(File file) throws Exception {
-		SudFileExpander expander = new SudFileExpander(file); 
-		expander.getSudParams().setFileSave(false, false, false, false);
-		expander.openSudFile(file);
-
-		SudDataInputStream inputStream = expander.getSudInputStream(); 
-		ChunkHeader chunkHeader;
-		long timeMicros = -1; 
-		int count = 0; 
-		
-		while(true){
-			try {
-				chunkHeader = ChunkHeader.deSerialise(inputStream);
-				
-				byte[] data = new byte[chunkHeader.DataLength];
-				inputStream.readFully(data);
-								
-				//check the crc to make sure data is intact
-				int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
-				if (crc != chunkHeader.DataCrc) {
-					System.out.println("Bad data CRC");
-					continue;
-				}
-				
-//				System.out.println(expander.getChunkFileType(chunkHeader.ChunkId));
-				
-				//is this an audio chunk and, if so, what is the time?
-				if (expander.getChunkFileType(chunkHeader.ChunkId)!=null && expander.getChunkFileType(chunkHeader.ChunkId).equals(ISudarDataHandler.WAV_FTYPE)) {
-					timeMicros = chunkHeader.getMicrosecondTime(); 
-					break; 
-				}
-				
-				expander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
-
-			}
-			catch (Exception e) {
-				System.out.println("Error getting time from file: " + file);
-				e.printStackTrace();
-				break; //important or an error will introduce an infinite loop...
-			}
-		}
-
-		inputStream.close();
-		expander.closeFileExpander();
-
-		return timeMicros; 
-	}
 
 
 	/**
@@ -379,7 +328,7 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		return sudMap; 
 	}
-	
+
 	/**
 	 * Check whether a chunk ID is an uncompressed chunk of wav data from continuous
 	 * recordings (could also be uncompressed wav data from click detections)
@@ -390,7 +339,6 @@ public class SudAudioInputStream extends AudioInputStream {
 	public boolean isChunkIDWav(int chunkID) {
 		return this.sudFileExpander.isChunkIDWav(chunkID); 
 	}
-	
 	
 	/** 
 	 * Open a sud input stream.
@@ -478,33 +426,33 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		return sudAudioInputStream;
 	}
-	
-	public static void saveSudMap(SudFileMap sudMap, File file) throws IOException {
+
+	private static void saveSudMap(SudFileMap sudMap, File file) throws IOException {
 		FileOutputStream fileOutputStream
-	      = new FileOutputStream(file);
-	    ObjectOutputStream objectOutputStream 
-	      = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
-	    objectOutputStream.writeObject(sudMap);
-	    objectOutputStream.flush();
-	    objectOutputStream.close();
+		= new FileOutputStream(file);
+		ObjectOutputStream objectOutputStream 
+		= new ObjectOutputStream(new BufferedOutputStream(fileOutputStream));
+		objectOutputStream.writeObject(sudMap);
+		objectOutputStream.flush();
+		objectOutputStream.close();
 	}
-	
-	
-	public static SudFileMap loadSudMap(File file) throws IOException, ClassNotFoundException {
+
+
+	private static SudFileMap loadSudMap(File file) throws IOException, ClassNotFoundException {
 		FileInputStream fileInputStream
-	      = new FileInputStream(file);
-	    ObjectInputStream objectInputStream
-	      = new ObjectInputStream(new BufferedInputStream(fileInputStream));
-	    SudFileMap p2 = null;
-	    try {
-	    	p2 = (SudFileMap) objectInputStream.readObject();
-	    }
-	    catch  (InvalidClassException e) {
-	    	System.out.println("Invalid sud file map format. It will regenerate with the latest format");
-	    }
-	    objectInputStream.close(); 
-	    return  p2; 
-	 
+		= new FileInputStream(file);
+		ObjectInputStream objectInputStream
+		= new ObjectInputStream(new BufferedInputStream(fileInputStream));
+		SudFileMap p2 = null;
+		try {
+			p2 = (SudFileMap) objectInputStream.readObject();
+		}
+		catch  (InvalidClassException e) {
+			System.out.println("Invalid sud file map format. It will regenerate with the latest format");
+		}
+		objectInputStream.close(); 
+		return  p2; 
+
 	}
 
 	/**
@@ -564,12 +512,22 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.readIndex = 0;
 		ChunkHeader chunkHeader;
 		this.audioBuffer = null; // reset the audio buffer.
-		
+
 		//long time1 = System.currentTimeMillis();
-		
+
 		/*
 		 * why can't count be declared here ? Why is it a field ? It's only used in this function. 
+		 * Count should have been set zero before this was called, so we can increment it 
+		 * easily enough in roughSkip and hopefully keep everything lined up. 
 		 */
+		if (bytes2SkipLeft > 0) {
+			long skipped = roughSkip(bytes2SkipLeft);
+			//			System.out.printf("Quick skip of %d of %d bytes to chunk %d\n", skipped, bytes2SkipLeft, count);
+			bytes2SkipLeft -= skipped;
+		}
+
+
+		byte[] data;
 
 		int nHead = sudMap.chunkHeaderMap.size();
 		while (count < nHead) {
@@ -583,12 +541,11 @@ public class SudAudioInputStream extends AudioInputStream {
 					chunkHeader = sudMap.chunkHeaderMap.get(count); 
 					sudFileExpander.getSudInputStream().skip(ChunkHeader.NUM_BYTES); 
 				}
-				
+
 				count++;
 
 				if (chunkHeader.checkId()) {
 
-					byte[] data = new byte[chunkHeader.DataLength];
 
 					if (isChunkIDWav(chunkHeader.ChunkId)) {
 						// how many samples are in this chunk
@@ -597,7 +554,12 @@ public class SudAudioInputStream extends AudioInputStream {
 
 						if (bytes2SkipLeft < bytesInChunk) {
 
+							data = new byte[chunkHeader.DataLength];
 							sudFileExpander.getSudInputStream().readFully(data);
+							int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+							if (dataCRC != chunkHeader.DataCrc) {
+								continue;
+							}
 
 							sudPrint("Chunk ID: " + chunkHeader.ChunkId + "  magic OK? " + chunkHeader.checkId() + " "
 									+ sudFileExpander.getChunkFileType(chunkHeader.ChunkId) + "data len: "
@@ -615,7 +577,7 @@ public class SudAudioInputStream extends AudioInputStream {
 							// now if we have any samples to skip need to up these.
 							readIndex = readIndex + bytes2SkipLeft;
 							bytesRead = bytesRead + bytes2SkipLeft;
-							
+
 							//long time2 = System.currentTimeMillis();
 
 							//System.out.println("Time test 1A: " + (time2 - time1));
@@ -625,30 +587,41 @@ public class SudAudioInputStream extends AudioInputStream {
 							sudPrint("Skip the chunk: ");
 
 							// skip the compressed data here
-							sudFileExpander.getSudInputStream().skip(data.length);
+							sudFileExpander.getSudInputStream().skip(chunkHeader.DataLength);
 
 							// we have, however, skipped far more raw audio bytes than compressed data.
 							bytes2SkipLeft = bytes2SkipLeft - bytesInChunk;
 							// keep updating the bytes read
 							this.bytesRead = bytesRead + bytesInChunk;
-							
+
 						}
 
 						lastWavChunk = chunkHeader;
 					} else {
 						// if not a wav file then process the chunk normally - stuff such as .CSV files
 						// should be decompressed and saved to the file system.
-//						if(sudFileExpander.getSudParams().saveMeta) {
-							
+						//						if(sudFileExpander.getSudParams().saveMeta) {
+
+						if (bytes2SkipLeft == 0) {
+							data = new byte[chunkHeader.DataLength];
 							sudFileExpander.getSudInputStream().readFully(data);
+							int dataCRC = CRC16.calcSUD(data, chunkHeader.DataLength);
+							if (dataCRC != chunkHeader.DataCrc) {
+								continue;
+							}
+
 							sudFileExpander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
+						}
+						else {
+							sudFileExpander.getSudInputStream().skip(chunkHeader.DataLength);
+						}
 
 
-							
-							//						}
-//						else {
-//							sudFileExpander.getSudInputStream().skip(data.length);
-//						}
+
+						//						}
+						//						else {
+						//							sudFileExpander.getSudInputStream().skip(data.length);
+						//						}
 					}
 				}
 			} catch (EOFException eof) {
@@ -658,7 +631,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					System.out.println("Close the file: ");
 				}
 				sudFileExpander.closeFileExpander();
-//				eof.printStackTrace();
+				//				eof.printStackTrace();
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -666,8 +639,64 @@ public class SudAudioInputStream extends AudioInputStream {
 			}
 
 		}
-		
-	
+	}
+
+	/**
+	 * Do a rough skip of data to try to get closer to the actual frame number we want, without
+	 * having to do lots of little skips. 
+	 * @param n number of bytes of raw audio data to skip. 
+	 * @return number of audio bytes actually skipped (different to the number of actual bytes skipped). 
+	 */
+	private long roughSkip(long audioBytes2Skip) {
+
+		ChunkHeader chunkHeader;
+		if (sudMap == null || sudMap.chunkHeaderMap == null) {
+			return 0;
+		}
+		int nHead = sudMap.chunkHeaderMap.size();
+		long totalToSkip = 0; // file bytes to skip
+		long audioSkipped = 0; // audio that was actually skipped. 
+
+		while (count < nHead) {
+			try {
+
+				chunkHeader = sudMap.chunkHeaderMap.get(count); 
+
+				if (chunkHeader.checkId() == false) {
+					continue;
+				}
+
+				int bytesInChunk = 0;
+				if (isChunkIDWav(chunkHeader.ChunkId)) {
+					// how many samples are in this chunk
+					bytesInChunk = (this.getFormat().getSampleSizeInBits() / 8) * nWavSamples(chunkHeader,
+							lastWavChunk, this.getFormat().getSampleRate(), sudFileExpander.getSudParams().zeroPad);
+					if (audioBytes2Skip - bytesInChunk < 0) {
+						/*
+						 * Getting close to where we want to be, so can stop at this point. 
+						 */					
+						break;
+					}	
+				}
+				audioSkipped += bytesInChunk;
+				audioBytes2Skip -= bytesInChunk;
+				totalToSkip += (chunkHeader.DataLength + ChunkHeader.NUM_BYTES);
+				count++;
+			}
+			catch (Exception ex) {
+				count = 0;
+				return 0;
+			}
+		}
+		try {
+			sudFileExpander.getSudInputStream().skip(totalToSkip);
+			bytesRead += totalToSkip;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return audioSkipped;
 	}
 
 	/**
@@ -759,17 +788,17 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
-		int count = 0;
+		int readCount = 0;
 		try {
 			for (int i = off; i < (len + off); i++) {
 				b[i] = (byte) this.read();
-				count++;
+				readCount++;
 			}
 		}
 		catch (EOFException e) {
 			// normal behaviour
 		}
-		return count;
+		return readCount;
 	}
 
 	/**
@@ -788,23 +817,22 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	@Override
 	public long skip(long n) throws IOException {
-		
-		  // make sure not to skip fractional frames
-        final long reminder = n % frameSize;
-        if (reminder != 0) {
-            n -= reminder;
-        }
-        if (n <= 0) {
-            return 0;
-        }
-                
+
+		// make sure not to skip fractional frames
+		final long reminder = n % frameSize;
+		if (reminder != 0) {
+			n -= reminder;
+		}
+		if (n <= 0) {
+			return 0;
+		}
+
 		/**
 		 * Skipping is a little tricky because we don't want to decompress every X3
 		 * chunk on the way to getting to the right spot.
 		 */
 
 		//long time1 = System.currentTimeMillis();
-
 		/**
 		 * There are two options here; 1) There are enough samples in the buffer for a
 		 * skip 2) We need to go through chunks to get to the skipped data.
@@ -820,7 +848,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			readIndex = (int) (readIndex + n);
 			bytesRead = (int) (bytesRead + n);
 		}
-		
+
 		//long time2 = System.currentTimeMillis();
 
 		//System.out.println("Skip time...: " + (time2 - time1));
@@ -849,7 +877,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.sudFileExpander.closeFileExpander();
 		sudFileExpander.getSudInputStream().close();
 	}
-	
+
 	/**
 	 * Add a file listener to the sud file expander. 
 	 * @param sudFileListener - the file listener to add. 
@@ -857,7 +885,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	public void addSudFileListener(SudFileListener sudFileListener) {
 		sudFileExpander.addSudFileListener(sudFileListener);
 	}
-	
+
 	/**
 	 * Remove a sud file listener. 
 	 * @param sudFileListener - the sudFileListener to remove.
@@ -941,7 +969,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			System.out.println(message);
 		}
 	}
-	
+
 	/**
 	 * Set the parameters for extracting the .sud file. This contains options such
 	 * as whether to zeroPad, where and if to save files etc.
@@ -951,7 +979,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	public void setSudParams(SudParams params) {
 		this.sudFileExpander.setSudParams(params);
 	}
-	
+
 	/**
 	 * Get the parameters for extracting the .sud file. This contains options such
 	 * as whether to zeroPad, where and if to save files etc.
@@ -961,7 +989,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	public SudParams getSudParams() {
 		return this.sudFileExpander.getSudParams();
 	}
-	
+
 	/**
 	 * Get the string name for the chunk ID. Note that a .sud file can have
 	 * different numbers and versions of data handlers and so the chunkID is not
@@ -985,15 +1013,103 @@ public class SudAudioInputStream extends AudioInputStream {
 	public  IDSudar getChunkDataHandler(int chunkID) {
 		return sudFileExpander.getChunkDataHandler(chunkID); 
 	}
-	
+
 	/**
 	 * Get the sud file map. This contains metadata about the file. 
 	 * @return the sud file map. 
 	 */
 	public SudFileMap getSudMap() {
+		checkDetectorInformation(this.sudMap);
 		return this.sudMap;
 	}
 
+
+	/**
+	 * Pull mor edetailed detector information out of the xml in the SUD file map
+	 * <p>The simple clickDetectorSampleRate field doesn't cut it. 
+	 * @param sudMap2
+	 */
+	private void checkDetectorInformation(SudFileMap sudMap) {
+		if (sudMap == null) {
+			return;
+		}
+		/**
+		 * There is a fair amount of non standard stuff in the ST XML and 
+		 * it won't easily parse into a document. Two things I've found so far
+		 * are getting rid of some 0 characters in the array and also the need
+		 * for XML documents to have a single root element. 
+		 * So code below replaces zeros with spaces and wraps it in a <ST> selement. 
+		 */
+		SUDXMLUtils sudXmlUtils = new SUDXMLUtils();
+		String xml = sudMap.xmlMetaData;
+		Document doc = null;
+		try {
+			doc = sudXmlUtils.createDocument(xml);
+		} catch (SUDFileException e) {
+			System.out.println(e.getMessage());
+		}
+		if (doc == null) {
+			try {
+				doc = sudXmlUtils.createDetectorDocument(xml);
+			}
+			catch (SUDFileException e) {
+			}
+		}
+		if (doc != null) {
+			SUDClickDetectorInfo detInfo = sudXmlUtils.extractDetectorInfo(doc);
+			sudMap.detectorInfo = detInfo;
+		}
+	}
+	
+	/**
+	 * Open a sud input stream. and grab the first microsecond time from the first audio chunk. This does 
+	 * NOT create a file map. 
+	 * @param - the file to extract time from. 
+	 */              
+	public static long quickFileTime(File file) throws Exception {
+		SudFileExpander expander = new SudFileExpander(file); 
+		expander.getSudParams().setFileSave(false, false, false, false);
+		expander.openSudFile(file);
+
+		SudDataInputStream inputStream = expander.getSudInputStream(); 
+		ChunkHeader chunkHeader;
+		long timeMicros = -1; 
+		int count = 0; 
+		while(true){
+			try {
+				chunkHeader = ChunkHeader.deSerialise(inputStream);
+				
+				byte[] data = new byte[chunkHeader.DataLength];
+				inputStream.readFully(data);
+								
+				//check the crc to make sure data is intact
+				int crc = CRC16.calcSUD(data, chunkHeader.DataLength);
+				if (crc != chunkHeader.DataCrc) {
+					System.out.println("Bad data CRC");
+					continue;
+				}
+				
+//				System.out.println(expander.getChunkFileType(chunkHeader.ChunkId));
+				
+				//is this an audio chunk and, if so, what is the time?
+				if (expander.getChunkFileType(chunkHeader.ChunkId)!=null && expander.getChunkFileType(chunkHeader.ChunkId).equals(ISudarDataHandler.WAV_FTYPE)) {
+					timeMicros = chunkHeader.getMicrosecondTime(); 
+					break; 
+				}
+				
+				expander.processChunk(chunkHeader.ChunkId, new Chunk(data, chunkHeader));
+
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		inputStream.close();
+		expander.closeFileExpander();
+
+		return timeMicros; 
+	}
 
 	/**
 	 * Test decompression on a file using a SudAudioInputStream. 
@@ -1004,55 +1120,65 @@ public class SudAudioInputStream extends AudioInputStream {
 		long time0 = System.currentTimeMillis();
 		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/singlechan_exmple/67411977.171215195605.sud";
 		//String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/large_singlechan_example/67411977.180529084019.sud";
-//		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
-//		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/corrupt_example/7124.221217233726.sud";
-		
-//		String filePath = "G:\\My Drive\\PAMGuard_dev\\sud_decompression\\singlechan_dataset\\67158026.180831195821.sud";
-		String filePath = "Z:\\WP1b Drifting Array Data\\PLABuoy1\\SoundTrap\\20221129\\671383589.221129131747.sud";
+		String filePath = "/Users/au671271/Library/CloudStorage/GoogleDrive-macster110@gmail.com/My Drive/PAMGuard_dev/sud_decompression/clickdet_example/7140.221020162018.sud";
 
+		//			String filePath = "C:\\ProjectData\\Morlais\\BadSud\\7124\\7124.221217233726.sud";
 		//String filePath  = "/Users/au671271/Desktop/singlechan_exmple/67411977.171215195605.sud";
 		SudAudioInputStream sudAudioInputStream = null;
-		
+		File file = new File(filePath);
+
+		File sudMapFileName = new File(file.getAbsoluteFile() + "x"); 
+		SudFileMap sudFileMap = null;
+		if (sudMapFileName.exists()) {
+			SudFileMap loadedFileMap ; 
+			try {
+				loadedFileMap = loadSudMap(sudMapFileName); 
+			}	
+			catch (Exception e) {
+				e.printStackTrace(); 
+				System.err.println("Could not open .sudx file map"); 
+				loadedFileMap = null; 
+			}
+
+			//			if (loadedFileMap == null || loadedFileMap.zeroPad!=params.zeroPad) {
+			//				sudFileMap = null; 
+			//			}
+			//			else
+			sudFileMap = loadedFileMap; 
+			//			System.out.println(sudFileMap.xmlMetaData);
+		}
+
+
 		SudParams sudParams = new SudParams(); 
 		//sudParams.saveFolder = "/Users/au671271/Desktop/sud_tests";
-		sudParams.setSaveWav(true); 
+		sudParams.setSaveWav(true);
 
 		boolean verbose = false; // true to print more stuff.
-		
+
 		try {
-			
-			//current time milliseconds
+
+
+			sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
+
 			long time1 = System.currentTimeMillis();
 
-			//test the quick file time
-			long timeMicroseconds = SudAudioInputStream.quickFileTime(new File(filePath));
-			
-			long time2 = System.currentTimeMillis();
-
-			System.out.println("Time to grab time: " + (time2 - time1));
-
-			//open the input stream
-			sudAudioInputStream = SudAudioInputStream.openInputStream(new File(filePath), sudParams, verbose);
-			
-			time1 = System.currentTimeMillis();
-			
 			System.out.println("Time to create file map: " + (time1 - time0) + " sample rate: " + sudAudioInputStream.getFormat().getSampleRate() + " " + sudAudioInputStream.getSudMap().clickDetSampleRate);
 
 			System.out.println("sudAudioInputStream.available() 1: " + sudAudioInputStream.available());
 
 			sudAudioInputStream.skip(500000 * 0);
-			
-			time2 = System.currentTimeMillis();
-			
+
+			long time2 = System.currentTimeMillis();
+
 			System.out.println("Time to skip 1: " + (time2 - time1));
 
-			
+
 			time1 = System.currentTimeMillis();
-			
+
 			sudAudioInputStream.skip(500000 * 0);
 
 			time2 = System.currentTimeMillis();
-			
+
 			System.out.println("Time to skip 2: " + (time2 - time1));
 
 			System.out.println("sudAudioInputStream.available() 2: " + sudAudioInputStream.available());
@@ -1060,7 +1186,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			while (sudAudioInputStream.available() > 0) {
 				sudAudioInputStream.read();
 			}
-			 
+
 			sudAudioInputStream.close();
 
 		} catch (Exception e) {
@@ -1070,18 +1196,11 @@ public class SudAudioInputStream extends AudioInputStream {
 		long time3 = System.currentTimeMillis();
 
 		System.out.println("Total processing time: " + (time3 - time0));
-		
-		
-		System.out.println("------------------------------------------");
-		System.out.println("------------------------------------------");
-		System.out.println("------------------------------------------");
-		System.out.println("------------------------------------------");
 
-		
 		System.out.println(sudAudioInputStream.getSudMap().xmlMetaData);
 
 	}
-	
-	
+
+
 
 }
