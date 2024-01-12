@@ -1102,6 +1102,10 @@ public class SudAudioInputStream extends AudioInputStream {
 			}
 			catch (Exception e) {
 				e.printStackTrace();
+				//otherwise get stuck in an infinite loop. 
+				inputStream.close();
+				expander.closeFileExpander();
+				return -1;
 			}
 		}
 
