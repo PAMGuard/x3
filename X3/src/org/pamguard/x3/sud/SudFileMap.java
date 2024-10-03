@@ -16,6 +16,11 @@ public class SudFileMap implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 5L;
+	
+	/**
+	 * The version of the sud map. 
+	 */
+	public short mapversion = 1;
 
 	/**
 	 * A list of all chunk headers in the file.
@@ -105,6 +110,15 @@ public class SudFileMap implements Serializable {
 	 * @return the sample rate in samples per second. 
 	 */
 	public float getSampleRate() {
+		return sampleRate;
+	}
+	
+	/**
+	 * Get the total number of samples in the file. Note that this will return a different number 
+	 * if zeroPad is selected or not. 
+	 * @return the sample rate in samples per second. 
+	 */
+	public float getTotalSamples() {
 		return sampleRate;
 	}
 
