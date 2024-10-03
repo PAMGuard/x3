@@ -116,10 +116,10 @@ public class SudFileMap implements Serializable {
 	/**
 	 * Get the total number of samples in the file. Note that this will return a different number 
 	 * if zeroPad is selected or not. 
-	 * @return the sample rate in samples per second. 
+	 * @return the total samples in the file (independent of number of channels)
 	 */
 	public float getTotalSamples() {
-		return sampleRate;
+		return totalSamples;
 	}
 
 	/**

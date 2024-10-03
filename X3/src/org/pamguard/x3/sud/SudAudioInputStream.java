@@ -264,7 +264,7 @@ public class SudAudioInputStream extends AudioInputStream {
 						 * implemented.
 						 * 
 						 */
-						if (lastWavChunk != null && sudFileExpander.getSudParams().zeroPad) {
+						if (lastWavChunk != null) {
 
 							totalSamples = totalSamples + nWavSamples(chunkHeader, lastWavChunk,
 									wavFileHandler.getSampleRate(), sudFileExpander.getSudParams().zeroPad);
