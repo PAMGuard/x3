@@ -47,7 +47,7 @@ public class SudFileX3ChunkTest {
 				System.out.print(sudFileExpander.getChunkFileType(chunkID) +" WAV DATA:");
 				System.out.print(sudChunk.chunkHeader.toHeaderString()); 
 				
-				System.out.println("WAV nBytes: " + sudChunk.buffer.length);
+				System.out.println("wav nBytes: " + sudChunk.buffer.length);
 				System.out.println(chunkData2String(sudChunk));
 				count.set(count.get()+1); 
 				wav=sudChunk.buffer;

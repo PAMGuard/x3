@@ -138,6 +138,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	}
 
 	int count=0;
+	long totalSamples = 0;
 
 	private boolean saveDWV;
 
@@ -146,7 +147,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	public void processChunk(Chunk sudChunk) {
 		
 		//System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
-
+	
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
 			audioFile = new File(fileName + "." + fileSuffix); //can be dwv or wav
@@ -195,6 +196,7 @@ public class WavFileHandler implements ISudarDataHandler {
 								int samplesToAdd = (int)(error * (fs / 1000000));
 								byte[] fill = new byte[samplesToAdd * 2 * nChan];
 								if (saveWav) {
+									totalSamples = totalSamples+samplesToAdd;
 									pipedOutputStream.write(fill);
 								}
 
@@ -218,10 +220,25 @@ public class WavFileHandler implements ISudarDataHandler {
 			}
 
 			//System.out.println("Write wav: " + ++count + " " + sudChunk.chunkHeader.HeaderCrc );
+			
 
 			if (saveWav) {
-				pipedOutputStream.write(bitShiftChunk(sudChunk.buffer));
+				byte[] samples = bitShiftChunk(sudChunk.buffer);
+				//				if (sudChunk.chunkHeader.SampleCount!=samples.length/2/this.getNChannels()) {
+//					System.out.println("Sud samples do not align: " + count + " " +  samples.length/2 + "  " + sudChunk.chunkHeader.SampleCount);
+//				}
+
+				pipedOutputStream.write(samples);
+				totalSamples=totalSamples+samples.length/2/this.getNChannels();
+
+//				if (count%1000==0) {
+//					System.out.println("Wav chnk: " + count + " totalSamples: " + totalSamples); 
+//				}
 			}
+			
+			count++;
+
+			
 			lastChunk = sudChunk;
 
 
@@ -259,6 +276,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	@Override
 	public void close() {
+	
 
 		if (this.lastChunk!=null && saveMeta) {
 
@@ -450,6 +468,16 @@ public class WavFileHandler implements ISudarDataHandler {
 	public int getNChannels() {
 		return nChan;
 	}
+	
+
+	/**
+	 * Gte the number of zero padded samples added to the file. Note that if zero pad is set to false this will always be zero
+	 * @return the number of samples. 
+	 */
+	public int getCumulativeSamples() {
+		return this.cumulativeSamples;
+	}
+
 
 	//	
 	//	public void setSudarParams(SudParams sudParams) {
