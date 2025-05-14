@@ -13,9 +13,9 @@ import java.util.ArrayList;
 public class SudFileMap implements Serializable {
 
 	/**
-	 * 
+	 * 14-5-2025 - change to 6L because sample numbers were slightly wrong. This should mean that sud maps are rewritten
 	 */
-	private static final long serialVersionUID = 5L;
+	private static final long serialVersionUID = 6L;
 
 	/**
 	 * A list of all chunk headers in the file.

@@ -379,6 +379,10 @@ public class SudAudioInputStream extends AudioInputStream {
 			try {
 				loadedFileMap = loadSudMap(sudMapFileName); 
 			}	
+			catch (InvalidClassException e) {
+				System.err.println("The .sudx file map is out of data and will be recalculated"); 
+				loadedFileMap = null; 
+			}
 			catch (Exception e) {
 				e.printStackTrace(); 
 				System.err.println("Could not open .sudx file map"); 
