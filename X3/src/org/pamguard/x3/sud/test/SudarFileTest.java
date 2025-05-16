@@ -8,7 +8,6 @@ import org.pamguard.x3.sud.Chunk;
 import org.pamguard.x3.sud.SudAudioInputStream;
 import org.pamguard.x3.sud.SudFileExpander;
 import org.pamguard.x3.sud.SudFileMap;
-import org.pamguard.x3.sud.SudMapListener;
 import org.pamguard.x3.sud.SudParams;
 import org.pamguard.x3.utils.WavFile;
 import org.pamguard.x3.utils.WavFileException;
@@ -22,10 +21,11 @@ public class SudarFileTest {
 	
 	
 	public static void main(String[] args) {
-		System.out.println("Hello .sud file decompression");
+		System.out.println("Test .sud file decompression");
 				
 		long time0 = System.currentTimeMillis();
 		
+		//4 channel sud files
 		String wavFilePath = "/Users/jdjm/Desktop/sud_test/sud/738742278.180708083005.wav";
 
 		String sudfilePath = "/Users/jdjm/Desktop/sud_test/sud/738742278.180708083005.sud";
@@ -41,10 +41,21 @@ public class SudarFileTest {
 	
 
 		SudFileExpander sudFileExpander = new SudFileExpander(new File(sudfilePath), sudParams); 
-				
+
+		try {
+			sudFileExpander.processFile();
+			sudFileExpander.closeFileExpander();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 		WavFile readWavFile;
 		try {
 			
+			
+			//map the sud file - how many samples are available?
 			SudFileMap sudMap = SudAudioInputStream.mapSudFile(sudFileExpander, null,  false);
 
 			readWavFile = WavFile.openWavFile(new File(sudWavPath));
@@ -55,9 +66,15 @@ public class SudarFileTest {
 			int validBits = readWavFile.getValidBits();
 			long sampleRate = readWavFile.getSampleRate();
 						
-			System.out.println("The number of samples in the file from PAMGuard's own sud decompression is: " + numFrames + " and from sud map: " + sudMap.totalSamples + " " + sudMap.firstChunkTimeMicrosecs); 
+			System.out.println("The number of samples in the file from PAMGuard's own sud decompression is: " + numFrames + " and from sud map: " + sudMap.totalSamples + " first chnk microseconds. " + sudMap.firstChunkTimeMicrosecs); 
 			
+			sudParams.setSaveWav(false);
 			
+			SudAudioInputStream sudAudioInputStream = SudAudioInputStream.openInputStream(new File(sudfilePath), sudParams, false); 
+
+			System.out.println("The number of samples in the file from PAMGuard's sud audio stream is: " + sudAudioInputStream.getFrameLength() +  " based on available bytes: " + sudAudioInputStream.available()/numChannels/2);
+			sudAudioInputStream.close();
+
 			//Read the file decompressed from SoundTrapHist.exe
 			readWavFile = WavFile.openWavFile(new File(wavFilePath));
 			numFrames = readWavFile.getNumFrames();
@@ -76,9 +93,6 @@ public class SudarFileTest {
 			e.printStackTrace();
 		}
 	
-		
-
-		
 		
 //		sudFileExpander.addSudFileListener((chunkID, sudChunk)->{
 //			
@@ -103,12 +117,6 @@ public class SudarFileTest {
 //			}
 //		});
 
-		try {
-			sudFileExpander.processFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		long time1 = System.currentTimeMillis();
 		
 		System.out.println("Processing time: " +  (time1-time0));
