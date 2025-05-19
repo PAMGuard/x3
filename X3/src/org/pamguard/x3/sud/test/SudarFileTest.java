@@ -37,7 +37,7 @@ public class SudarFileTest {
 		sudParams.setFileSave(true, false, false, false);
 		sudParams.setSudEnable(true, true, true);
 		
-		sudParams.zeroPad = false;
+		sudParams.zeroPad = true;
 	
 
 		SudFileExpander sudFileExpander = new SudFileExpander(new File(sudfilePath), sudParams); 
