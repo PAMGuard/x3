@@ -7,8 +7,8 @@ import org.pamguard.x3.sud.SudParams;
 
 
 /**
- * Example main class which deomstrates how to listen dfor sud chunks. 
- * @author au671271
+ * Example main class which demonstrates how to listen for sud chunks. 
+ * @author Jamie Macaulay
  *
  */
 public class SudarListenerTest {

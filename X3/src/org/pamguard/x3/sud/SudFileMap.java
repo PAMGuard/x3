@@ -13,14 +13,9 @@ import java.util.ArrayList;
 public class SudFileMap implements Serializable {
 
 	/**
-	 * 
+	 * 14-5-2025 - change to 6L because sample numbers were slightly wrong. This should mean that sud maps are rewritten
 	 */
-	private static final long serialVersionUID = 5L;
-	
-	/**
-	 * The version of the sud map. 
-	 */
-	public short mapversion = 1;
+	private static final long serialVersionUID = 6L;
 
 	/**
 	 * A list of all chunk headers in the file.
@@ -111,15 +106,6 @@ public class SudFileMap implements Serializable {
 	 */
 	public float getSampleRate() {
 		return sampleRate;
-	}
-	
-	/**
-	 * Get the total number of samples in the file. Note that this will return a different number 
-	 * if zeroPad is selected or not. 
-	 * @return the total samples in the file (independent of number of channels)
-	 */
-	public float getTotalSamples() {
-		return totalSamples;
 	}
 
 	/**
