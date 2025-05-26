@@ -1134,7 +1134,8 @@ public class SudAudioInputStream extends AudioInputStream {
 
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				System.err.printf("Error reading SUD quickFileTime in %s: %s\n", file.getName(), e.getMessage());
+//				e.printStackTrace();
 				//otherwise get stuck in an infinite loop. 
 				inputStream.close();
 				expander.closeFileExpander();
