@@ -118,14 +118,33 @@ public class SudParams implements Cloneable {
 	 * @param saveCSV   - true to save CSV files.
 	 * @param saveXML   - true to save XML files≥
 	 * @param saveClks- true to save both text and dwv click files.
+	 * @param saveMag- true to save magnetometer data in a wav (swv) file
 	 */
-	public void setFileSave(boolean saveWav, boolean saveCSV, boolean saveXML, boolean saveClks) {
+	public void setFileSave(boolean saveWav, boolean saveCSV, boolean saveXML, boolean saveClks, boolean saveMag) {
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "wav"), saveWav);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.CSV_FTYPE, "csv"), saveCSV);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.XML_FTYPE, "xml"), saveXML);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "bcl"), saveClks);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "dwv"), saveClks);
+		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "swv"), saveMag);
 	}
+	
+
+	/**
+	 * Convenience function to set the file types that should be saved in the
+	 * fileSuffixSave hash map. backwrd compatble as aveAccel was added later. 
+	 * This function defaults to not saving magnetometer data.
+	 * 
+	 * @param saveWav   - true to save wav files.
+	 * @param saveCSV   - true to save CSV files.
+	 * @param saveXML   - true to save XML files≥
+	 * @param saveClks- true to save both text and dwv click files.
+	 * @param saveClks- true to save both text and dwv click files.
+	 */
+	public void setFileSave(boolean saveWav, boolean saveCSV, boolean saveXML, boolean saveClks) {
+		setFileSave( saveWav,  saveCSV,  saveXML,  saveClks,  false); 
+	}
+	
 	
 
 	/**
@@ -141,14 +160,38 @@ public class SudParams implements Cloneable {
 	 * @param saveWav   - true to save wav files.
 	 * @param saveCSV   - true to save CSV files.
 	 * @param saveClks- true to save both text and dwv click files.
+	 * @param enableAccel- true to save magentometer data in a wav file
 	 */
-	public void setSudEnable(boolean enableWav, boolean enableCSV, boolean enableClicks) {
+	public void setSudEnable(boolean enableWav, boolean enableCSV, boolean enableClicks, boolean enableMag) {
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "wav"), enableWav);
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.CSV_FTYPE, "csv"), enableCSV);
 
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "bcl"), enableClicks);
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "dwv"), enableClicks);
+		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "swv"), enableMag);
+
 	}
+	
+	/**
+	 * Convenience function to set the file types that should be disabled in the
+	 * fileSuffixSave hash map. If clicks or wav are disabled then upstream x3
+	 * decompression will also be disabled. Note that this function is for convenience and 
+	 * backward compatibility as the enableMag parameter was added later. The function defaults to
+	 * enabling magnetometer data.
+	 * <p>
+	 * Caution: disabling an upstream process will disable all downstream processes
+	 * e.g. disabling X3 will mean no wav will be written.
+	 * <p>
+	 * Note that xml cannot be disabled. 
+	 * 
+	 * @param saveWav   - true to save wav files.
+	 * @param saveCSV   - true to save CSV files.
+	 * @param saveClks- true to save both text and dwv click files.
+	 */
+	public void setSudEnable(boolean enableWav, boolean enableCSV, boolean enableClicks) {
+		setSudEnable( enableWav,  enableCSV,  enableClicks,  true);
+	}
+
 
 	/**
 	 * Convenience function to set whether wav files are saved.
@@ -192,7 +235,7 @@ public class SudParams implements Cloneable {
 	 * @return the file type.
 	 */
 	public boolean isFileSave(ISudarKey key) {
-		if (fileSuffixSave.get(key) == null) return true; 
+		if (fileSuffixSave.get(key) == null) return false; //if no key then default to false
 		else return fileSuffixSave.get(key).booleanValue();
 	}
 	
@@ -225,6 +268,7 @@ public class SudParams implements Cloneable {
 	public boolean isSudEnable(ISudarKey key) {
 		return (fileSuffixDisable.get(key) || fileSuffixDisable.get(key) == null);
 	}
+
 
 
 	

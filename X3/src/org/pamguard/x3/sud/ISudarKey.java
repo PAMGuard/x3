@@ -1,6 +1,6 @@
 package org.pamguard.x3.sud;
 
-class ISudarKey
+public class ISudarKey
 {
     public String key1;
     public String key2;

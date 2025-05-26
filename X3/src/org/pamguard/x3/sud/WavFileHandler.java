@@ -129,7 +129,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.sudParams = sudParams.clone();
 
 		this.fileName = sudParams.getOutFilePath();
-//		this.saveWav = sudParams.
+		
 		this.saveMeta = sudParams.isFileSave(ISudarDataHandler.XML_FTYPE,  XMLFileHandler.XML_FILE_SUFFIX);
 //
 //		this.zeroFill = sudParams.zeroPad;
@@ -140,13 +140,14 @@ public class WavFileHandler implements ISudarDataHandler {
 	int count=0;
 	long totalSamples = 0;
 
-	private boolean saveDWV;
-
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
 		
-		//System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
+//		if (fileSuffix.equals("swv")) {
+//			System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
+//		}
+
 	
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
@@ -340,6 +341,8 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
 		
+		
+
 		//System.out.println(innerXml); 
 
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
@@ -375,7 +378,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		//should or should we not save the wav file?
 		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
 		
-//		System.out.println("SAVE WAV FILES: " + saveWav); 
+//System.out.println("SAVE WAV FILES: " + saveWav + " " + fileSuffix + " " + fs + " " + nBits + " " + nChan); 
 
 		if (saveWav) {
 			///create the wav writer
