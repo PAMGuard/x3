@@ -87,7 +87,6 @@ public class SudAudioInputStream extends AudioInputStream {
 		this.sudMap = sudMap;
 		this.totalBytes = sudMap.totalSamples * (sudMap.getBitsPerSample() / 8)*format.getChannels(); 
 
-
 		//System.out.println("Total bytes: " + totalBytes + "  " + sudMap.totalSamples + "  " + format.getChannels());
 
 		sudFileExpander.addSudFileListener((chunkId, chunk) -> {
@@ -212,7 +211,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		if (sudMapListener!=null) {
 			sudMapListener.chunkProcessed(null, 0);
 		}
-
+    
 		int wavchunkcount = 0;
 		int count = 0;
 		while (true) {
@@ -298,6 +297,9 @@ public class SudAudioInputStream extends AudioInputStream {
 							if (wavFileHandler == null) {
 								throw new Exception("The .sud file does not contain any audio data");
 							}
+							
+							totalSamples = totalSamples + nWavSamples(chunkHeader, lastWavChunk,
+									wavFileHandler.getSampleRate(), sudFileExpander.getSudParams().zeroPad);
 
 							totalSamples = totalSamples + nWavSamples(chunkHeader, lastWavChunk,
 									wavFileHandler.getSampleRate(), sudFileExpander.getSudParams().zeroPad);
@@ -307,6 +309,10 @@ public class SudAudioInputStream extends AudioInputStream {
 						if (wavchunkcount%1000==0){
 							sudPrint("HeaderCrc: " + wavchunkcount + ": " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
 						}
+						
+				//		if (wavchunkcount%1000==0){
+				//			sudPrint("HeaderCrc: " + wavchunkcount + ": " + chunkHeader.HeaderCrc + " totalSamples: " + totalSamples, verbose);
+				//		}
 						wavchunkcount++;
 
 						lastWavChunk = chunkHeader;
@@ -337,9 +343,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			sudMap.clickDetSampleRate = dwvFileHandler.getSampleRate(); 
 		}
 
-		sudPrint("No. zero-pad samples: " + wavFileHandler.getCumulativeSamples(), verbose);
-
-
+		//sudPrint("No. zero-pad samples: " + wavFileHandler.getCumulativeSamples(), verbose);
 
 		if (sudMapListener!=null) {
 			//indicate the processing has finished. 
@@ -546,7 +550,7 @@ public class SudAudioInputStream extends AudioInputStream {
 		 */
 		if (bytes2SkipLeft > 0) {
 			long skipped = roughSkip(bytes2SkipLeft);
-			//			long skipped = skip(bytes2SkipLeft);
+//			long skipped = skip(bytes2SkipLeft);
 			//			System.out.printf("Quick skip of %d of %d bytes to chunk %d\n", skipped, bytes2SkipLeft, count);
 			bytes2SkipLeft -= skipped;
 		}
@@ -557,8 +561,8 @@ public class SudAudioInputStream extends AudioInputStream {
 		int nHead = sudMap.chunkHeaderMap.size();
 		while (count < nHead) {
 			try {
-				//				 System.out.println("Deserialise: " +
-				//				 sudFileExpander.getSudInputStream().available());
+//				 System.out.println("Deserialise: " +
+//				 sudFileExpander.getSudInputStream().available());
 				if (sudMap.chunkHeaderMap == null) {					
 					chunkHeader = ChunkHeader.deSerialise(sudFileExpander.getSudInputStream());
 				}
@@ -656,7 +660,7 @@ public class SudAudioInputStream extends AudioInputStream {
 					System.out.println("Close the file: ");
 				}
 				sudFileExpander.closeFileExpander();
-				eof.printStackTrace();
+				//eof.printStackTrace();
 				return;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -817,7 +821,6 @@ public class SudAudioInputStream extends AudioInputStream {
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
 		int readCount = 0;
-
 		try {
 			for (int i = off; i < (len + off); i++) {
 				b[i] = (byte) this.read();
@@ -1143,6 +1146,19 @@ public class SudAudioInputStream extends AudioInputStream {
 		expander.closeFileExpander();
 
 		return timeMicros; 
+	}
+	
+
+	public SudFileExpander getSudFileExpander() {
+		return this.sudFileExpander;
+	}
+	
+	public int getBytesRead() {
+		return bytesRead;
+	}
+
+	public long getTotalBytes() {
+		return totalBytes;
 	}
 
 

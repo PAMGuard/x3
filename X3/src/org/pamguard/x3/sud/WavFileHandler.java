@@ -139,7 +139,7 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	int count=0;
 	long totalSamples = 0;
-
+	private boolean saveDWV;
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
@@ -147,7 +147,6 @@ public class WavFileHandler implements ISudarDataHandler {
 //		if (fileSuffix.equals("swv")) {
 //			System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
 //		}
-
 	
 		//create the audio file. 
 		if (audioFile==null && saveWav) {
