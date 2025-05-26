@@ -1162,19 +1162,6 @@ public class SudAudioInputStream extends AudioInputStream {
 		return totalBytes;
 	}
 
-
-	public SudFileExpander getSudFileExpander() {
-		return this.sudFileExpander;
-	}
-
-	public int getBytesRead() {
-		return bytesRead;
-	}
-
-	public long getTotalBytes() {
-		return totalBytes;
-	}
-
 	/**
 	 * Test decompression on a file using a SudAudioInputStream. 
 	 * @param args - input args are null. 
