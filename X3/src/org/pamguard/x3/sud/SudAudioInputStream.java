@@ -183,7 +183,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	public static SudFileMap mapSudFile(SudFileExpander sudFileExpander, SudMapListener sudMapListener, boolean verbose) throws Exception {
 
-		System.out.println("Map the sud file: " + sudFileExpander.getSudParams().isFileSave(ISudarDataHandler.WAV_FTYPE, "wav"));
+		//System.out.println("Map the sud file: " + sudFileExpander.getSudParams().isFileSave(ISudarDataHandler.WAV_FTYPE, "wav"));
 
 
 		SudHeader sudHeader = sudFileExpander.openSudFile(sudFileExpander.getSudFile());
