@@ -188,7 +188,7 @@ public class WavFileHandler implements ISudarDataHandler {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
 							if (saveMeta) {
-								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap %d us at sample %d (%.6f s), chunk %d", error, cumulativeSamples, t, chunkCount));
 							}
 							
 							if (sudParams.zeroPad) {
@@ -205,7 +205,7 @@ public class WavFileHandler implements ISudarDataHandler {
 								error = 0;
 								cumulativeSamples += samplesToAdd;
 								if (saveMeta) {
-									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added %d zeros", samplesToAdd));
 								}
 							}
 						}
