@@ -125,6 +125,7 @@ public class SudParams implements Cloneable {
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.CSV_FTYPE, "csv"), saveCSV);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.XML_FTYPE, "xml"), saveXML);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "bcl"), saveClks);
+		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "xsensIMU.csv"), saveCSV);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "dwv"), saveClks);
 		fileSuffixSave.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "swv"), saveMag);
 	}
@@ -165,6 +166,7 @@ public class SudParams implements Cloneable {
 	public void setSudEnable(boolean enableWav, boolean enableCSV, boolean enableClicks, boolean enableMag) {
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "wav"), enableWav);
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.CSV_FTYPE, "csv"), enableCSV);
+		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "xsensIMU.csv"), enableCSV);
 
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.TXT_FTYPE, "bcl"), enableClicks);
 		fileSuffixDisable.put(new ISudarKey(ISudarDataHandler.WAV_FTYPE, "dwv"), enableClicks);

@@ -188,12 +188,13 @@ public class WavFileHandler implements ISudarDataHandler {
 						if (!prevChunkWasNeg) {
 							//String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount);
 							if (saveMeta) {
-								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap {0} us at sample {1} ({2} s), chunk {3}", error, cumulativeSamples, t, chunkCount));
+								logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("Sampling Gap %d us at sample %d (%.6f s), chunk %d", error, cumulativeSamples, t, chunkCount));
 							}
+							
 							if (sudParams.zeroPad) {
 
-								//System.out.println("Error: " + error + " " + nChan ); 
-								int samplesToAdd = (int)(error * (fs / 1000000));
+								int samplesToAdd = (int)(error * (((double) fs) / 1000000));
+								//System.out.println("Error: " + error + " " + nChan + "  " + samplesToAdd); 
 								byte[] fill = new byte[samplesToAdd * 2 * nChan];
 								if (saveWav) {
 									totalSamples = totalSamples+samplesToAdd;
@@ -204,7 +205,7 @@ public class WavFileHandler implements ISudarDataHandler {
 								error = 0;
 								cumulativeSamples += samplesToAdd;
 								if (saveMeta) {
-									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added {0} zeros", samplesToAdd));
+									logFile.writeXML(this.chunkIds[0], "WavFileHandler", "Info", String.format("added %d zeros", samplesToAdd));
 								}
 							}
 						}
@@ -377,7 +378,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		//should or should we not save the wav file?
 		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
 		
-//System.out.println("SAVE WAV FILES: " + saveWav + " " + fileSuffix + " " + fs + " " + nBits + " " + nChan); 
+		System.out.println("SAVE WAV FILES: " + saveWav + " " + fileSuffix + " fs: " + fs + " nBits: " + nBits + " nChan: " + nChan + " zeroPad: " + sudParams.zeroPad); 
 
 		if (saveWav) {
 			///create the wav writer

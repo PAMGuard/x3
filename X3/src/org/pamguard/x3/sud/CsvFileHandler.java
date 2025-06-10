@@ -55,6 +55,7 @@ public class CsvFileHandler implements ISudarDataHandler {
 		this.fileName =filePath.getOutFilePath();
 		this.ftype=ftype; 
 		this.saveMeta=filePath.isFileSave(ISudarDataHandler.CSV_FTYPE, CSV_FILE_SUFFIX); 
+		//System.out.println("CSV FILE SAVER: " + this.saveMeta);
 
 	}
 
