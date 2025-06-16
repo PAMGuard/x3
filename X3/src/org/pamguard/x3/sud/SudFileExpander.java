@@ -225,11 +225,13 @@ public class SudFileExpander {
 
 		}
 		try {
+
+			aHandler.dataHandler.processChunk(sudChunk);
+			
+			//must be after the chunk has processed- for example if wav file then zero padding needed. 
 			for (int i=0; i<this.sudFileListener.size(); i++) {
 				sudFileListener.get(i).chunkProcessed(chunkId,  sudChunk); 
 			}
-			
-			aHandler.dataHandler.processChunk(sudChunk);
 			
 			
 		} catch (Exception e) {

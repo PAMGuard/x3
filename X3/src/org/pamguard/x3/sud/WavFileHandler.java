@@ -97,7 +97,7 @@ public class WavFileHandler implements ISudarDataHandler {
 	/**
 	 * The bit shift. Data decompressed in the X3 is always 2+ bytes. But, the ADC
 	 * that saved them may not be a 16 bit ADC. It could for example be a 12 bit
-	 * ADC. In this case there is not point in bit shifting to 16 bits because X3
+	 * ADC. In this case there is no point in bit shifting to 16 bits because X3
 	 * compression will be less effective.
 	 */
 	private Integer bitShift;
@@ -143,6 +143,8 @@ public class WavFileHandler implements ISudarDataHandler {
 
 	@Override
 	public void processChunk(Chunk sudChunk) {
+		//Note the data from the chunk is not compressed, it is the raw data. GThe decompresion has already been done in the X3Handler. =.
+		
 		
 //		if (fileSuffix.equals("swv")) {
 //			System.out.println("1 Process wav file: " + sudChunk.buffer.length + "  " + sudChunk.buffer[0] + " saveWav: " + saveWav + " audioFile "  +audioFile);
@@ -192,14 +194,28 @@ public class WavFileHandler implements ISudarDataHandler {
 							}
 							
 							if (sudParams.zeroPad) {
+								
+								//System.out.println(" Wav chunk: : " + nChan + " new sample len:: " + sudChunk.buffer.length); 
+
 
 								int samplesToAdd = (int)(error * (((double) fs) / 1000000));
-								//System.out.println("Error: " + error + " " + nChan + "  " + samplesToAdd); 
 								byte[] fill = new byte[samplesToAdd * 2 * nChan];
-								if (saveWav) {
-									totalSamples = totalSamples+samplesToAdd;
-									pipedOutputStream.write(fill);
-								}
+								
+								//we need to add fill samples before the current samples in the chunk so need to copy array. 
+								byte[] samples = new byte[sudChunk.buffer.length + fill.length];
+								System.arraycopy(fill, 0, samples, 0, fill.length);
+								System.arraycopy(sudChunk.buffer, 0, samples, fill.length, sudChunk.buffer.length);
+								
+								sudChunk.buffer = samples; //set the new buffer with the fill samples.
+								//System.out.println("Error: " + error + " " + nChan + "  " + samplesToAdd + " saveWav: " + saveWav + " new sample len:: " + sudChunk.buffer.length); 
+
+								
+								//Note this is important because, if we don't do this then the sample count will be wrong for any SudFileListener. 
+								
+//								if (saveWav) {
+//									totalSamples = totalSamples+samplesToAdd;
+//									pipedOutputStream.write(fill);
+//								}
 
 								//fsWavOut.Write(fill, 0, fill.Length);
 								error = 0;
@@ -222,8 +238,11 @@ public class WavFileHandler implements ISudarDataHandler {
 
 			//System.out.println("Write wav: " + ++count + " " + sudChunk.chunkHeader.HeaderCrc );
 			
+			//bit 
+
 
 			if (saveWav) {
+				
 				byte[] samples = bitShiftChunk(sudChunk.buffer);
 				//				if (sudChunk.chunkHeader.SampleCount!=samples.length/2/this.getNChannels()) {
 //					System.out.println("Sud samples do not align: " + count + " " +  samples.length/2 + "  " + sudChunk.chunkHeader.SampleCount);
@@ -238,8 +257,7 @@ public class WavFileHandler implements ISudarDataHandler {
 			}
 			
 			count++;
-
-			
+						
 			lastChunk = sudChunk;
 
 
@@ -341,8 +359,6 @@ public class WavFileHandler implements ISudarDataHandler {
 		this.logFile = inputStream;
 		this.chunkIds = new int[]{id};
 		
-		
-
 		//System.out.println(innerXml); 
 
 		Document doc = XMLFileHandler.convertStringToXMLDocument(innerXml.trim());
@@ -378,7 +394,7 @@ public class WavFileHandler implements ISudarDataHandler {
 		//should or should we not save the wav file?
 		saveWav = sudParams.isFileSave(new ISudarKey(ISudarDataHandler.WAV_FTYPE, fileSuffix)); 
 		
-		System.out.println("SAVE WAV FILES: " + saveWav + " " + fileSuffix + " fs: " + fs + " nBits: " + nBits + " nChan: " + nChan + " zeroPad: " + sudParams.zeroPad); 
+		//System.out.println("SAVE WAV FILES: " + saveWav + " " + fileSuffix + " fs: " + fs + " nBits: " + nBits + " nChan: " + nChan + " zeroPad: " + sudParams.zeroPad + " --- "); 
 
 		if (saveWav) {
 			///create the wav writer
