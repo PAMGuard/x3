@@ -21,7 +21,7 @@ public class SudParams implements Cloneable {
 	/**
 	 * True to zero pad the wav files.
 	 */
-	public boolean zeroPad = true;
+	public boolean zeroPad = false;
 
 //	/**
 //	 * True to save wav files. 
