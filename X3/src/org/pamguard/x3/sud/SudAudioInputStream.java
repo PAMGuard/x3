@@ -94,6 +94,7 @@ public class SudAudioInputStream extends AudioInputStream {
 			if (sudFileExpander.getChunkFileType(chunkId).equals("wav")) {
 				sudPrint("New wav data: No. bytes: " + chunk.buffer.length + " Total samples read: " + bytesRead
 						+ " of " + sudMap.totalSamples);
+				
 				this.audioBuffer = chunk.buffer;
 			}
 		});
@@ -1100,6 +1101,8 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * @param - the file to extract time from. 
 	 */              
 	public static long quickFileTime(File file) throws Exception {
+//		System.out.println("---quickFileTime: ----START----");
+
 		SudFileExpander expander = new SudFileExpander(file); 
 		expander.getSudParams().setFileSave(false, false, false, false);
 		expander.openSudFile(file);
@@ -1145,6 +1148,8 @@ public class SudAudioInputStream extends AudioInputStream {
 
 		inputStream.close();
 		expander.closeFileExpander();
+		
+//		System.out.println("---quickFileTime: -----END----");
 
 		return timeMicros; 
 	}

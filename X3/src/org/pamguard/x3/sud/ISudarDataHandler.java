@@ -56,7 +56,7 @@ public interface ISudarDataHandler {
 
 	
 	static public ISudarDataHandler createHandler(String ftype, SudParams sudFileData) throws FileFormatNotSupportedException {
-		System.out.println("Create handler: " + ftype);
+		//System.out.println("Create handler: " + ftype);
 		switch(ftype.toLowerCase()) {
 				case X3_FTYPE: return new X3Handler(sudFileData,  ftype); 
 				case WAV_FTYPE: return new WavFileHandler(sudFileData, ftype);
