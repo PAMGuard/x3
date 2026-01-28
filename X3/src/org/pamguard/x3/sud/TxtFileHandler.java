@@ -180,6 +180,12 @@ public class TxtFileHandler implements ISudarDataHandler {
 		return fileSuffix;
 	}
 
+	@Override
+	public void setLastChunk(Chunk sudChunk) {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 
 }

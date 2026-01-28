@@ -387,5 +387,11 @@ public class X3Handler implements ISudarDataHandler {
 		return null;
 	}
 
+	@Override
+	public void setLastChunk(Chunk sudChunk) {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 }

@@ -247,6 +247,12 @@ public class XMLFileHandler implements ISudarDataHandler  {
 		return ftype;
 	}
 
+	@Override
+	public void setLastChunk(Chunk sudChunk) {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 
 

@@ -30,6 +30,13 @@ public interface ISudarDataHandler {
 	public void close(); 
 	
 	/**
+	 * Set the last chunk that was processed. This is useful for handlers that need to know when we may have jumped
+	 * in time - for example when skipping to a different part of the file. Setting the last to chunk to null indicates
+	 * to the handler that a jump may have occurred.
+	 */
+	public void setLastChunk(Chunk sudChunk); 
+	
+	/**
 	 * Initialise the file handler. The start of the sud files contains xml chunks that define which handlers are
 	 * needed by the file. init(...) is called with the xml info from the initial chunk which contains metadata such as 
 	 * sample rate, number of channels etc. 

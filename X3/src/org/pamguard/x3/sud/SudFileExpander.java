@@ -240,6 +240,18 @@ public class SudFileExpander {
 		}
 	}
 	
+	/**
+	 * Set the last chunk to null for all data handlers to null. This is useful when
+	 * seeking to a different part of the file so that data handlers know that
+	 * there may be a jump in time. 
+	 */
+	public void setLastChunkNull() {
+		if (dataHandlers == null) return;
+		Iterator<Integer> keySet = dataHandlers.keySet().iterator();
+		while (keySet.hasNext()) {
+			dataHandlers.get(keySet.next()).dataHandler.setLastChunk(null);
+		}
+	}
 	
 	/**
 	 * Check whether a chunk ID is an uncompressed chunk of wav data from CONTINUOUS

@@ -678,6 +678,8 @@ public class SudAudioInputStream extends AudioInputStream {
 	 * @return number of audio bytes actually skipped (different to the number of actual bytes skipped). 
 	 */
 	private long roughSkip(long audioBytes2Skip) {
+		
+		System.out.println("Rough skip of " + audioBytes2Skip + " bytes");
 
 		ChunkHeader chunkHeader;
 		if (sudMap == null || sudMap.chunkHeaderMap == null) {
@@ -686,6 +688,12 @@ public class SudAudioInputStream extends AudioInputStream {
 		int nHead = sudMap.chunkHeaderMap.size();
 		long totalToSkip = 0; // file bytes to skip
 		long audioSkipped = 0; // audio that was actually skipped. 
+		
+		
+		//make sure the last chunk in the sud file expander is set to null. 
+		//This is important as the last wav chunk is used to calculate the number of samples in a chunk
+		//if the zeropad function is enabled. 
+		this.sudFileExpander.setLastChunkNull();
 
 		while (count < nHead) {
 			try {

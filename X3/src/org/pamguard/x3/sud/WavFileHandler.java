@@ -21,7 +21,9 @@ import org.w3c.dom.NodeList;
 
 
 /**
- * Write wav files from the X3 data (or uncompressed data blocks in the SUD files). 
+ * Write wav files from the X3 data (or uncompressed data blocks in the SUD files). Note that this 
+ * handler does not do any decompression, it just writes the raw data to a wav file and adds some zero
+ * padding to chunks if that has been specified in the sud params.
  * 
  * @author Jamie Macaulay
  *
@@ -195,7 +197,12 @@ public class WavFileHandler implements ISudarDataHandler {
 							
 							if (sudParams.zeroPad) {
 								
-								//System.out.println(" Wav chunk: : " + nChan + " new sample len:: " + sudChunk.buffer.length); 
+								/**Note: the zero padding only works if the incoming chunks are sequential. If there has been a jump in the file
+								 * then the lastChunk should be be null so that no zero padding will be done - otherwise very large zeropad values
+								 * can be erroneously added which causes all sorts of issues. 
+								 */
+								
+								//System.out.println(" Wav chunk zeropad: : " + nChan + " new sample len:: " + sudChunk.buffer.length); 
 
 
 								int samplesToAdd = (int)(error * (((double) fs) / 1000000));
@@ -514,6 +521,11 @@ public class WavFileHandler implements ISudarDataHandler {
 	@Override
 	public String getFileType() {
 		return fileSuffix;
+	}
+
+	@Override
+	public void setLastChunk(Chunk sudChunk) {
+		this.lastChunk = sudChunk;
 	}
 
 }

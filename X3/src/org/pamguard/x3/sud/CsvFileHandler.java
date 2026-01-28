@@ -121,6 +121,12 @@ public class CsvFileHandler implements ISudarDataHandler {
 	public String getHandlerType() {
 		return ftype;
 	}
+
+	@Override
+	public void setLastChunk(Chunk sudChunk) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 
