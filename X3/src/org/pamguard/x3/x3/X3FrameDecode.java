@@ -147,7 +147,7 @@ public class X3FrameDecode {
 			//			int extra = bits.nextBits(iRice);
 			int index = (count<<iRice) + bits.getBits(iRice);
 			try {
-				System.out.println("p:  " + p);
+//				System.out.println("p:  " + p);
 
 			outData[p] = irt[index];
 			}
@@ -156,7 +156,7 @@ public class X3FrameDecode {
 			}
 		}
 		
-		System.out.println("outData:  " + outData[0] + "  " + outData[1]);
+//		System.out.println("outData:  " + outData[0] + "  " + outData[1]);
 
 		//System.out.println("stride: " +  stride + " n: " + n);
 		integrate(outData, offset, n, stride);
