@@ -679,7 +679,7 @@ public class SudAudioInputStream extends AudioInputStream {
 	 */
 	private long roughSkip(long audioBytes2Skip) {
 		
-		System.out.println("Rough skip of " + audioBytes2Skip + " bytes");
+		//System.out.println("Rough skip of " + audioBytes2Skip + " bytes");
 
 		ChunkHeader chunkHeader;
 		if (sudMap == null || sudMap.chunkHeaderMap == null) {

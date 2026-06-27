@@ -14,10 +14,10 @@ import org.pamguard.x3.sud.SudParams;
 public class ExpandSudFileTest  {
 	
 	public static void main(String[] args) {
-		String sudfilePath = "F:/Zeropad_test/134250533.241227185742.sud";
+		String sudfilePath = "/Users/jdjm/Dropbox/PAMGuard_dev/sud_decompression/trex_example/R35260113160001.sud";
 		
 		SudParams sudParams = new SudParams();
-		sudParams.setVerbose(false);
+		sudParams.setVerbose(true);
 		sudParams.setFileSave(true, true, true, true, true);
 		sudParams.setSudEnable(true, true, true, true);
 		

@@ -62,11 +62,11 @@ public class SudFileExpander {
 	}
 
 	public SudHeader openSudFile(SudDataInputStream bufinput) throws IOException {
-		//		int nbytes = bufinput.available();
+				int nbytes = bufinput.available();
 
 		SudHeader sudHeader = SudHeader.deSerialise(bufinput);
-		//System.out.println(sudHeader.toHeaderString());
-		//		System.out.println("Bytes read: " + (nbytes-bufinput.available()));
+//	System.out.println(sudHeader.toHeaderString());
+//				System.out.println("Bytes read: " + (nbytes-bufinput.available()));
 
 		dataHandlers.clear();
 
@@ -120,8 +120,8 @@ public class SudFileExpander {
 				chunkHeader = ChunkHeader.deSerialise(bufinput);
 
 				if (chunkHeader.checkId()) {
-					//				System.out.println("--------------");
-					//				System.out.println(chunkHeader.toHeaderString());
+									//System.out.println("--------------");
+									//System.out.println(chunkHeader.toHeaderString());
 					count++;
 					if (sudParams.isVerbose()) {
 						System.out.println(count + ": Read chunk data: " + chunkHeader.ChunkId + " n bytes: " + chunkHeader.DataLength);
