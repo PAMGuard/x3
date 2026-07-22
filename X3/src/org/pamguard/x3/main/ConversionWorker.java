@@ -49,8 +49,15 @@ public class ConversionWorker extends SwingWorker<Integer, ConversionProgress>{
 			}
 			
 			publish(new ConversionProgress(1, sourceList.get(i), destList.get(i), sourceList.size(), i));
+			
+			try {
 
 			convertFile(sourceList.get(i), destList.get(i));
+			
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
 
 //			try {
 //				Thread.sleep(1000);
